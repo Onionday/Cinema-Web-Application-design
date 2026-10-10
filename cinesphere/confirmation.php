@@ -34,7 +34,7 @@ if (!$ids) {
 $bookings = [];
 foreach ($ids as $id) {
     $b = get_booking((int) $id);
-    if ($b && (int) $b['user_id'] === current_user_id()) {
+    if ($b && (int) $b['user_id'] === current_user_id() && $b['booking_status'] === 'confirmed') {
         $b['seats'] = get_booking_seats((int) $b['booking_id']);
         $bookings[] = $b;
     }
@@ -56,6 +56,8 @@ $page_title       = 'Booking confirmed';
 $page_description = 'Your CineSphere booking confirmation and e-tickets.';
 
 require __DIR__ . '/includes/header.php';
+$booking_step = 3;
+require __DIR__ . '/includes/booking_progress.php';
 ?>
 
 <div class="container" style="padding-bottom:4rem;">
@@ -76,7 +78,11 @@ require __DIR__ . '/includes/header.php';
         across <?= count($bookings) ?>
         <?= count($bookings) === 1 ? 'screening' : 'screenings' ?>,
         <?= e(money($grand)) ?> charged.
-        An acknowledgement has been sent to <strong><?= e($bookings[0]['email']) ?></strong>.
+        <?php if (count(array_filter($bookings, static fn($b) => (bool) $b['email_sent'])) === count($bookings)): ?>
+          Acknowledgements have been delivered to the local coursework inbox.
+        <?php else: ?>
+          Some acknowledgements could not be delivered. Your tickets remain valid; keep these references.
+        <?php endif; ?>
       </p>
     </div>
   </div>
@@ -202,14 +208,9 @@ require __DIR__ . '/includes/header.php';
       <div>
         <h3 style="font-size:.95rem;">Your email</h3>
         <p class="small muted" style="margin:0;">
-          <?php if (MAIL_MODE === 'file'): ?>
-            For this coursework build the acknowledgement is written to the
-            project&rsquo;s <code>mail/</code> folder rather than being sent
-            out to the internet.
-          <?php else: ?>
-            The acknowledgement was handed to the local mail server for
-            delivery to <?= e($bookings[0]['email']) ?>.
-          <?php endif; ?>
+          This coursework preview delivers acknowledgements to
+          <?= e(MAIL_LOCAL_ACCOUNT) ?> on the local mail server.
+          Check the delivery status above; no mail is sent to external accounts.
         </p>
       </div>
     </div>

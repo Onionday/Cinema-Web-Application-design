@@ -21,7 +21,7 @@ generated on the server and every style is hand-written.
 
    | Order | File | What it does |
    |---|---|---|
-   | 1 | `sql/01_schema.sql` | Creates the `cinesphere` database and all eleven tables |
+   | 1 | `sql/01_schema.sql` | Creates the `cinesphere` database and all twelve tables |
    | 2 | `sql/02_seed.sql` | Loads the sample films, halls, seats, schedule and bookings |
 
    From a terminal the equivalent is:
@@ -51,14 +51,41 @@ generated on the server and every style is hand-written.
 
 The staff account unlocks the **Staff** page in the navigation bar.
 
-### Email
+### Upgrade an existing installation
 
-`MAIL_MODE` in `includes/config.php` is set to `'file'`. Every
-acknowledgement is written into a `mail/` folder inside the project as a
-readable `.eml` file rather than being sent out — which is what the
-project guidelines require. The folder is created automatically the
-first time a booking is confirmed. Setting `MAIL_MODE` to `'mail'`
-switches to PHP's `mail()` instead.
+Back up the existing database, then import `sql/03_booking_history.sql` only.
+It adds and backfills seat history without resetting users, preferences or bookings.
+New installations already get this table from `01_schema.sql`.
+Previously cancelled seats that were deleted by the old version cannot be recovered.
+
+### Email and the portable local preview
+
+The local launcher is `../CineSphere-local/Start-CineSphere.cmd` relative to
+this repository. It starts MariaDB, PHP and a Mailpit SMTP inbox, all on loopback.
+The site is at `http://127.0.0.1:8087/cinesphere/`; the inbox is at
+`http://127.0.0.1:8025/`. Use `Stop-CineSphere.cmd` in that runtime folder to stop them.
+
+Acknowledgements now use PHP `mail()` and actual SMTP delivery. The only recipient
+is `coursework@cinesphere.local`, the local coursework mailbox; the original
+customer address appears in the message body for demonstration. Mailpit captures
+messages locally and has no relay configured. Nothing is sent to external accounts.
+`email_sent` is set only after the SMTP transport accepts the message. A mail outage
+leaves the booking valid and shows a delivery warning instead of claiming success.
+
+For another Windows/XAMPP machine, run Mailpit bound to `127.0.0.1` and configure:
+
+```ini
+[mail function]
+SMTP=127.0.0.1
+smtp_port=1025
+sendmail_from=bookings@cinesphere.local
+```
+
+Restart PHP/Apache after editing its `php.ini`. On Linux, configure PHP's local
+sendmail transport to deliver to the same local-only SMTP inbox. The inbox is a
+local test tool, not part of the submitted application or an extra content page.
+See [Mailpit's official installation guide](https://mailpit.axllent.org/docs/install/).
+
 
 ---
 
@@ -75,7 +102,7 @@ site:
 2. **Choose seats** — an interactive seat map of the actual hall, showing
    which seats are genuinely gone.
 3. **Short-list** — the screening plus those seats joins a ranked
-   short-list. Up to six alternatives can be held at once, reordered, or
+   short-list. Up to six alternatives can be saved at once, reordered, or
    removed. Nothing is charged at this point.
 4. **Final selection** — the short-list page re-checks every entry against
    the live bookings table, shows which survived, and the customer ticks
@@ -172,14 +199,14 @@ cinesphere/
 ├── sql/
 │   ├── 01_schema.sql          database and tables
 │   └── 02_seed.sql            sample data
-└── mail/                      created at run time; acknowledgement .eml files
+└── sql/03_booking_history.sql  non-destructive upgrade for existing databases
 ```
 
 ---
 
 ## 5. Database
 
-Eleven tables plus one view.
+Twelve tables plus one view.
 
 ```
 users ──┬── preferences ──── preference_seats ──┐
@@ -273,3 +300,28 @@ a component framework, moving the seat map to a live WebSocket feed so
 two customers see each other's selections in real time, or swapping PHP
 sessions for token-based auth. None of that is present here, and none of
 it is needed for the 85% the base version carries.
+
+## Base-version fixes and verification (10 October 2026)
+
+- The mobile menu is a keyboard-accessible button; Enter opens it and Escape
+  closes it and returns focus. Without JavaScript the navigation remains visible.
+- Seat buttons have full row/number/price labels, a single Tab stop, four-direction
+  arrow navigation, Home/End, and live selection totals. They remain 44px tall on
+  phones; only the seat map scrolls horizontally. A native checkbox fallback
+  supports seat selection without JavaScript.
+- Three server-rendered booking progress steps and explicit wording explain that
+  short-listing remembers a choice but does not reserve seats.
+- Scheduling and reopening share full date-time overlap checks with 20-minute
+  turnaround. A hall row lock serializes schedule changes across requests.
+- Booking commits lock the screening and preference before checking availability.
+  Staff cancellation locks the same screening, refunds and releases seats in one
+  transaction, then sends notifications after commit.
+- `booking_seat_history` retains original seat labels/types/prices when active
+  allocations are released. Cancelled references cannot render valid e-tickets.
+- Customer and staff cancellations report email failures accurately.
+
+The regression suite in `../tests/base_regression.py` creates its own randomly
+named database, runs real HTTP flows, and removes only that temporary database.
+It does not reset the preview database. Test email subjects start with `[Base test]`.
+See `../tests/base-results.json` for recorded results and `../tests/README.md`
+for scenarios and manual browser checks. Modern enhancements remain separate work.

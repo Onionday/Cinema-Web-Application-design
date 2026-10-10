@@ -1,50 +1,24 @@
 <?php
-/* =====================================================================
- * includes/mailer.php
- *
- * Booking acknowledgements.
- *
- * The project guidelines require that no mail leaves the local web
- * server, so MAIL_MODE is 'file' by default: each message is written
- * into the project's mail/ folder as a readable .eml file that can be
- * opened in any mail client or text editor. Switching MAIL_MODE to
- * 'mail' in config.php hands the same message to PHP's mail().
- * ===================================================================== */
-
+/* Local SMTP acknowledgements; external delivery is never requested. */
 require_once __DIR__ . '/functions.php';
 
-/**
- * Sends (or files) one message.
- *
- * @return bool true if the acknowledgement was delivered or written
- */
+/** True only when the local SMTP transport accepts the message. */
 function send_mail(string $to, string $subject, string $body): bool
 {
-    $headers = [
-        'From: ' . SITE_NAME . ' <' . SITE_EMAIL . '>',
-        'Reply-To: ' . SITE_EMAIL,
-        'MIME-Version: 1.0',
-        'Content-Type: text/plain; charset=UTF-8',
-        'X-Mailer: CineSphere/1.0 (PHP/' . phpversion() . ')',
-    ];
-
-    if (MAIL_MODE === 'mail') {
-        return @mail($to, $subject, $body, implode("\r\n", $headers));
-    }
-
-    /* ---- file mode ---------------------------------------------- */
-    if (!is_dir(MAIL_DIR) && !@mkdir(MAIL_DIR, 0777, true)) {
+    if (!filter_var($to, FILTER_VALIDATE_EMAIL) || preg_match('/[\r\n]/', $subject)) {
         return false;
     }
-
-    $name = date('Ymd-His') . '-' . substr(md5($to . $subject . microtime()), 0, 6) . '.eml';
-    $eml  = 'Date: ' . date('r') . "\r\n"
-          . 'To: ' . $to . "\r\n"
-          . 'Subject: ' . $subject . "\r\n"
-          . implode("\r\n", $headers) . "\r\n\r\n"
-          . $body . "\r\n";
-
-    return (bool) @file_put_contents(MAIL_DIR . DIRECTORY_SEPARATOR . $name, $eml);
+    $headers = [
+        'From: ' . SITE_NAME . ' <' . SITE_EMAIL . '>',
+        'MIME-Version: 1.0',
+        'Content-Type: text/plain; charset=UTF-8',
+    ];
+    $body = "Coursework local delivery\r\nCustomer account: " . $to . "\r\n\r\n" . $body;
+    $ok = @mail(MAIL_LOCAL_ACCOUNT, $subject, $body, implode("\r\n", $headers));
+    if (!$ok) {
+        error_log('CineSphere: local acknowledgement delivery failed. Check the local SMTP service.');
+    }
+    return $ok;
 }
 
 /**

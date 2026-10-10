@@ -53,6 +53,15 @@ $conn = db();
 $conn->begin_transaction();
 
 try {
+    db_one('SELECT showtime_id FROM showtimes WHERE showtime_id = ? FOR UPDATE', [(int) $booking['showtime_id']]);
+    $fresh = db_one('SELECT booking_status FROM bookings WHERE booking_id = ? FOR UPDATE', [$booking_id]);
+    if (!$fresh || $fresh['booking_status'] !== 'confirmed') {
+        $conn->rollback();
+        flash('info', 'This booking has already been cancelled.');
+        redirect('mybookings.php?show=other');
+    }
+    archive_booking_seats($booking_id);
+
     /* UPDATE - the booking is marked cancelled and refunded */
     db_execute(
         "UPDATE bookings
@@ -77,11 +86,14 @@ try {
 
 /* ---- Acknowledge it ------------------------------------------------ */
 $booking['payment_status'] = 'refunded';
-send_cancellation_notice($booking, $seats);
+$mailSent = send_cancellation_notice($booking, $seats);
 
 flash('success', 'Booking ' . $booking['booking_ref'] . ' has been cancelled and '
                 . seat_list_text($seats) . ' released. A refund of '
                 . money($booking['total_amount']) . ' will be returned to the '
-                . 'original payment method, and a confirmation has been emailed.');
+                . 'original payment method.');
+flash($mailSent ? 'success' : 'warning', $mailSent
+    ? 'Cancellation notice delivered to the local coursework inbox.'
+    : 'Your cancellation is saved, but email delivery failed. Keep your booking reference.');
 
 redirect('mybookings.php?show=other');

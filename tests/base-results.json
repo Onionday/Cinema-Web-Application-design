@@ -1,0 +1,106 @@
+{
+  "at": "2026-10-10T09:02:26.812806+00:00",
+  "isolated_database": "cinesphere_test_87a92c45bb7f",
+  "checks": [
+    {
+      "test": "Customer and staff sign-in",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "No-JavaScript checkbox submission adds a short-list choice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "Declined payment keeps preference and allocates no seat",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "Approved payment creates ticket and history snapshot",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "Acknowledgement accepted by local SMTP inbox",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "All delivered messages target only the local coursework mailbox",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "Cancellation refunds, releases seat and preserves original seat history",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "Cancelled history still shows A1",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "Cancelled reference cannot render a valid confirmation ticket",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "Stale second customer cannot buy the same seat",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "Customer cannot access staff page",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "Cross-midnight overlap rejected",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "Turnaround overlap rejected",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "Exact turnaround boundary accepted",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "Reverse cross-midnight overlap rejected",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "Replacement after cancellation accepted",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "Reopening a conflicting cancelled screening rejected",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "Staff cancellation rolls back if any write fails",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "Staff cancellation releases seats, keeps history and sends notice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "Mail failure leaves confirmed ticket but reports delivery failure",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

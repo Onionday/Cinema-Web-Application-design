@@ -92,9 +92,10 @@
             } else {
                 submitBtn.classList.remove('is-disabled');
                 submitBtn.removeAttribute('aria-disabled');
-                hintOut.textContent = chosen.length >= maxSeats
-                    ? 'That is the maximum of ' + maxSeats + ' seats per screening.'
-                    : 'You may choose up to ' + maxSeats + ' seats.';
+                hintOut.textContent = chosen.length + (chosen.length === 1 ? ' seat selected.' : ' seats selected.')
+                    + ' Total ' + fmt(total) + '. '
+                    + (chosen.length >= maxSeats ? 'Maximum of ' + maxSeats + ' seats reached.'
+                       : 'You may choose up to ' + maxSeats + ' seats.');
             }
 
             /* grey out the remaining free seats once the cap is reached */
@@ -144,21 +145,41 @@
             }
         });
 
-        /* Left / right / up / down move between seats for keyboard users. */
+        var seatButtons = Array.prototype.slice.call(map.querySelectorAll('.seat'));
+        var firstFree = seatButtons.find(function (b) { return !b.disabled; });
+        seatButtons.forEach(function (b) { b.tabIndex = b === firstFree ? 0 : -1; });
+        map.addEventListener('focusin', function (ev) {
+            var focused = ev.target.closest('.seat');
+            if (focused) {
+                seatButtons.forEach(function (b) { b.tabIndex = b === focused ? 0 : -1; });
+            }
+        });
         map.addEventListener('keydown', function (ev) {
             var btn = ev.target.closest('.seat');
-            if (!btn) { return; }
-
-            var keys = { ArrowLeft: -1, ArrowRight: 1 };
-            if (ev.key in keys) {
-                ev.preventDefault();
-                var all = Array.prototype.slice.call(map.querySelectorAll('.seat'));
-                var idx = all.indexOf(btn) + keys[ev.key];
-                while (idx >= 0 && idx < all.length && all[idx].disabled) {
-                    idx += keys[ev.key];
+            if (!btn || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(ev.key)) { return; }
+            ev.preventDefault();
+            var rows = Array.prototype.slice.call(map.querySelectorAll('.seat-row'));
+            var currentRow = btn.closest('.seat-row');
+            var candidates;
+            var target;
+            if (ev.key === 'ArrowUp' || ev.key === 'ArrowDown') {
+                var step = ev.key === 'ArrowUp' ? -1 : 1;
+                for (var r = rows.indexOf(currentRow) + step; r >= 0 && r < rows.length; r += step) {
+                    candidates = Array.prototype.slice.call(rows[r].querySelectorAll('.seat:not(:disabled)'));
+                    var number = Number(btn.getAttribute('data-num'));
+                    candidates.sort(function (a, b) {
+                        return Math.abs(Number(a.getAttribute('data-num')) - number) - Math.abs(Number(b.getAttribute('data-num')) - number);
+                    });
+                    if (candidates.length) { target = candidates[0]; break; }
                 }
-                if (all[idx]) { all[idx].focus(); }
+            } else {
+                candidates = Array.prototype.slice.call(currentRow.querySelectorAll('.seat:not(:disabled)'));
+                var index = candidates.indexOf(btn);
+                if (ev.key === 'Home') { target = candidates[0]; }
+                else if (ev.key === 'End') { target = candidates[candidates.length - 1]; }
+                else { target = candidates[index + (ev.key === 'ArrowLeft' ? -1 : 1)]; }
             }
+            if (target) { target.focus(); }
         });
 
         /* Clear-all link. */

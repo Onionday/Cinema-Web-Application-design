@@ -21,6 +21,7 @@ $flashes    = take_flashes();
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>document.documentElement.classList.add('js');</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="<?= e($page_description) ?>">
@@ -44,12 +45,12 @@ $flashes    = take_flashes();
       </span>
     </a>
 
-    <input type="checkbox" id="nav-toggle" class="nav-toggle">
-    <label for="nav-toggle" class="nav-toggle-label" aria-hidden="true">
-      <span></span><span></span><span></span>
-    </label>
+    <button type="button" id="nav-toggle" class="nav-toggle" aria-label="Open navigation"
+            aria-expanded="false" aria-controls="site-navigation">
+      <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+    </button>
 
-    <nav class="site-nav" aria-label="Main">
+    <nav id="site-navigation" class="site-nav" aria-label="Main">
       <ul>
         <li><a href="index.php"<?= nav_active('index.php') ?>>Home</a></li>
         <li><a href="movies.php"<?= nav_active('movies.php') ?>>Films</a></li>

@@ -18,7 +18,11 @@ require_once __DIR__ . '/includes/auth.php';
 require_post();
 
 $showtime_id = (int) ($_POST['showtime_id'] ?? 0);
-$rawSeats    = (string) ($_POST['seat_ids'] ?? '');
+$rawSeats = is_string($_POST['seat_ids'] ?? null) ? $_POST['seat_ids'] : '';
+/* Native checkbox fallback for browsers with JavaScript disabled. */
+if ($rawSeats === '' && is_array($_POST['seats'] ?? null)) {
+    $rawSeats = implode(',', array_filter($_POST['seats'], 'is_string'));
+}
 
 /* ---- Parse the seat list ------------------------------------------ */
 $seat_ids = [];
@@ -56,7 +60,7 @@ if (!is_logged_in()) {
         'seat_ids'    => $seat_ids,
     ];
     $_SESSION['redirect_after_login'] = $back;
-    flash('info', 'Your seats are being held while you sign in or register.');
+    flash('info', 'Your selection is saved while you sign in. Seats are secured only after confirmation.');
     redirect('account.php');
 }
 
@@ -127,7 +131,7 @@ foreach ($validSeats as $s) {
 }
 
 if ($dupes) {
-    flash('warning', 'You are already holding ' . implode(', ', $dupes)
+    flash('warning', 'You have already short-listed ' . implode(', ', $dupes)
                    . ' for this screening on your short-list.');
     redirect('preferences.php');
 }

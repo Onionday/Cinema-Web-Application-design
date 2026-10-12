@@ -439,8 +439,7 @@ code, kbd, samp { font-family: var(--mono); font-size: .9em; }
 .nav-account .who { font-size: .88rem; color: var(--ink-soft); }
 .inline-form { display: inline; margin: 0; }
 
-.nav-toggle,
-.nav-toggle-label { display: none; }
+.nav-toggle { display: none; }
 
 .flash-stack { padding-top: 1.2rem; }
 
@@ -2038,7 +2037,7 @@ legend {
 @media (max-width: 1040px) {
     .hero-inner      { grid-template-columns: 1fr; gap: 2.5rem; padding-block: 3.5rem 6rem; }
     .hero-feature    { justify-self: center; max-width: 300px; }
-    .booking-layout  { grid-template-columns: 1fr; }
+    .booking-layout  { grid-template-columns: minmax(0, 1fr); }
     .summary-panel   { position: static; }
     .quick-book      { grid-template-columns: repeat(2, 1fr); }
     .quick-book .btn { grid-column: 1 / -1; }
@@ -2050,7 +2049,7 @@ legend {
 @media (max-width: 860px) {
     :root { --gutter: 18px; }
 
-    .nav-toggle-label {
+    .js .nav-toggle {
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -2064,7 +2063,7 @@ legend {
         cursor: pointer;
     }
 
-    .nav-toggle-label span {
+    .nav-toggle span {
         display: block;
         height: 2px;
         background: var(--ink);
@@ -2072,7 +2071,7 @@ legend {
     }
 
     .site-nav {
-        display: none;
+        display: flex;
         width: 100%;
         flex-direction: column;
         align-items: stretch;
@@ -2080,7 +2079,7 @@ legend {
         margin: 0 0 1rem;
     }
 
-    .nav-toggle:checked ~ .site-nav { display: flex; }
+    .js .site-nav:not(.is-open) { display: none; }
 
     .site-nav > ul { flex-direction: column; align-items: stretch; }
     .site-nav > ul a { padding: .7rem .9rem; }
@@ -2118,7 +2117,7 @@ legend {
     .quick-book  { grid-template-columns: 1fr; margin-top: 0; border-radius: var(--radius); }
     .footer-grid { grid-template-columns: 1fr; gap: 1.8rem; }
     .hero-feature-text { margin: -2.4rem .8rem 0; }
-    .seat { width: 26px; height: 24px; font-size: .58rem; }
+    .seat { width: 44px; height: 44px; font-size: .8rem; }
     .seat.couch { width: 58px; }
     .film-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
     .ticket { grid-template-columns: 1fr; }
@@ -2171,3 +2170,31 @@ legend {
         scroll-behavior: auto !important;
     }
 }
+
+/* Base-version booking accessibility and compact layout. */
+.nav-toggle { background: transparent; color: var(--ink); }
+.booking-progress { margin-block: 1.25rem; }
+.booking-progress ol { display: flex; gap: .65rem; list-style: none; padding: 0; margin: 0; }
+.booking-progress li { display: flex; align-items: center; gap: .5rem; color: var(--ink-soft); font-size: .85rem; }
+.booking-progress li + li::before { content: '/'; margin-right: .2rem; color: var(--ink-faint); }
+.booking-progress [aria-current="step"] { color: var(--gold); font-weight: 700; }
+.step-number { display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; border: 1px solid currentColor; border-radius: 50%; }
+.booking-progress .complete { color: var(--teal); }
+.booking-layout .screen { margin-bottom: 1.2rem; }
+.booking-layout .seatmap { padding: 1rem .75rem; align-items: flex-start; }
+.seat-row { flex: 0 0 auto; width: max-content; margin-inline: auto; }
+.seat { flex-shrink: 0; width: 44px; height: 44px; font-size: .8rem; }
+.seat.couch { width: 66px; }
+.seat-fallback { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .7rem; }
+.seat-fallback p { grid-column: 1 / -1; }
+.seat-fallback label { padding: .5rem; }
+.booking-progress + .container + .section-tight { padding-block: .75rem 1.25rem; }
+@media (max-width: 620px) {
+    .booking-progress li { font-size: .72rem; gap: .3rem; }
+    .booking-progress ol { gap: .35rem; }
+    .booking-progress li + li::before { display: none; }
+    .booking-progress li { flex: 1; }
+    .step-number { flex-shrink: 0; }
+}
+
+.booking-layout > * { min-width: 0; }

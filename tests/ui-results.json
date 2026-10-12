@@ -1,0 +1,23 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "checks": {
+    "ArrowDown_A1_to_B1": true,
+    "Space_selects_A1_total_18_30": true,
+    "single_seat_tab_stop": true,
+    "full_seat_accessible_names": true,
+    "Enter_opens_mobile_menu": true,
+    "Escape_closes_and_restores_focus": true,
+    "no_document_horizontal_overflow": true,
+    "seat_controls_44px": true
+  },
+  "measurements": {
+    "viewport_width": 390,
+    "document_scroll_width": 375,
+    "seatmap_client_width": 337,
+    "seatmap_scroll_width": 714
+  },
+  "method": "Observed with browser DOM, keyboard interaction and screenshots; desktop viewport restored."
+}

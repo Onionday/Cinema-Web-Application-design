@@ -37,6 +37,8 @@ $page_description = 'Review the screenings you have short-listed, see which '
                   . 'are still available, and confirm the ones you want.';
 
 require __DIR__ . '/includes/header.php';
+$booking_step = 2;
+require __DIR__ . '/includes/booking_progress.php';
 ?>
 
 <div class="container">
@@ -64,7 +66,7 @@ require __DIR__ . '/includes/header.php';
     <h2>Your short-list is empty</h2>
     <p class="muted">
       Find a screening, choose your seats, and it will appear here. You
-      can hold up to <?= (int) MAX_PREFERENCES ?> alternatives at once and
+      can save up to <?= (int) MAX_PREFERENCES ?> alternatives at once and
       decide between them later.
     </p>
     <div class="btn-row" style="justify-content:center;">
@@ -243,7 +245,7 @@ require __DIR__ . '/includes/header.php';
       </div>
       <div class="btn-row">
         <a class="btn btn-ghost" href="showtimes.php">Add another screening</a>
-        <button type="submit" id="pay-btn" class="btn btn-primary btn-lg is-disabled"
+        <button type="submit" id="pay-btn" class="btn btn-primary btn-lg"
                 data-busy="Contacting gateway&hellip;">
           Confirm selected bookings
         </button>

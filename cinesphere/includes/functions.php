@@ -445,8 +445,23 @@ function get_booking(int $booking_id): ?array
 }
 
 /** The seats attached to one booking. */
+function archive_booking_seats(int $booking_id): void
+{
+    db_execute(
+        'INSERT IGNORE INTO booking_seat_history
+            (booking_id, seat_id, seat_row, seat_number, seat_type, seat_price)
+         SELECT bs.booking_id, bs.seat_id, s.seat_row, s.seat_number, s.seat_type, bs.seat_price
+           FROM booking_seats bs JOIN seats s ON s.seat_id = bs.seat_id
+          WHERE bs.booking_id = ?', [$booking_id]
+    );
+}
+
 function get_booking_seats(int $booking_id): array
 {
+    $history = db_all('SELECT seat_id, seat_row, seat_number, seat_type, seat_price
+                        FROM booking_seat_history WHERE booking_id = ? ORDER BY seat_row, seat_number',
+                      [$booking_id]);
+    if ($history) { return $history; }
     return db_all(
         'SELECT bs.seat_id, bs.seat_price, s.seat_row, s.seat_number, s.seat_type
            FROM booking_seats bs

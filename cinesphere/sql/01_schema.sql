@@ -214,6 +214,18 @@ CREATE TABLE booking_seats (
 -- ---------------------------------------------------------------------
 -- contact_messages : feedback / enquiry form submissions
 -- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS booking_seat_history (
+    booking_id INT NOT NULL,
+    seat_id INT NOT NULL,
+    seat_row CHAR(1) NOT NULL,
+    seat_number TINYINT UNSIGNED NOT NULL,
+    seat_type VARCHAR(20) NOT NULL,
+    seat_price DECIMAL(6,2) NOT NULL,
+    PRIMARY KEY (booking_id, seat_id),
+    CONSTRAINT fk_history_booking FOREIGN KEY (booking_id)
+        REFERENCES bookings(booking_id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE contact_messages (
     msg_id       INT AUTO_INCREMENT PRIMARY KEY,
     name         VARCHAR(80)  NOT NULL,

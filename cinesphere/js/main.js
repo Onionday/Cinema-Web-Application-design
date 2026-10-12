@@ -17,17 +17,30 @@
          * 1. Close the mobile menu after a link is tapped
          * ----------------------------------------------------------- */
         var toggle = document.getElementById('nav-toggle');
-        if (toggle) {
-            var links = document.querySelectorAll('.site-nav a');
-            Array.prototype.forEach.call(links, function (a) {
-                a.addEventListener('click', function () { toggle.checked = false; });
+        var navigation = document.getElementById('site-navigation');
+        if (toggle && navigation) {
+            var mobile = window.matchMedia('(max-width: 860px)');
+            function setMenu(open) {
+                navigation.classList.toggle('is-open', open);
+                toggle.setAttribute('aria-expanded', String(open));
+                toggle.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+            }
+            toggle.addEventListener('click', function () {
+                setMenu(toggle.getAttribute('aria-expanded') !== 'true');
             });
-
+            navigation.querySelectorAll('a').forEach(function (a) {
+                a.addEventListener('click', function () { if (mobile.matches) { setMenu(false); } });
+            });
             document.addEventListener('keydown', function (ev) {
-                if (ev.key === 'Escape') { toggle.checked = false; }
+                if (ev.key === 'Escape' && mobile.matches && navigation.classList.contains('is-open')) {
+                    setMenu(false);
+                    toggle.focus();
+                }
             });
+            function resizeMenu() { setMenu(!mobile.matches); }
+            mobile.addEventListener('change', resizeMenu);
+            resizeMenu();
         }
-
 
         /* -------------------------------------------------------------
          * 2. Two-step confirmation.

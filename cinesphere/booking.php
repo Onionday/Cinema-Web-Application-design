@@ -71,6 +71,8 @@ $page_description = 'Pick your seats for ' . $showtime['title'] . ' at '
 $page_scripts     = ['seats.js'];
 
 require __DIR__ . '/includes/header.php';
+$booking_step = 1;
+require __DIR__ . '/includes/booking_progress.php';
 ?>
 
 <div class="container">
@@ -146,6 +148,7 @@ require __DIR__ . '/includes/header.php';
                       <?= in_array($id, $preselect, true) && !$isTaken && !$isHeld
                           ? 'data-preselect="1"' : '' ?>
                       aria-pressed="false"
+                      aria-label="<?= e($title) ?>"
                       title="<?= e($title) ?>">
                 <?= (int) $s['seat_number'] ?>
               </button>
@@ -159,6 +162,23 @@ require __DIR__ . '/includes/header.php';
           </div>
         <?php endforeach; ?>
       </div>
+
+      <noscript>
+        <style>.seatmap, .legend, .seat-keyboard-help { display: none; }</style>
+        <fieldset class="seat-fallback">
+          <legend>Select up to <?= (int) MAX_SEATS_PER_BOOKING ?> seats</legend>
+          <p>Choose seats below, then submit the summary form. The server calculates the total.</p>
+          <?php foreach ($seats as $s): $id = (int) $s['seat_id']; ?>
+            <label>
+              <input type="checkbox" form="seat-form" name="seats[]" value="<?= $id ?>"
+                <?= isset($taken[$id]) || in_array($id, $held, true) ? 'disabled' : '' ?>
+                <?= in_array($id, $preselect, true) ? 'checked' : '' ?>>
+              <?= e(seat_label($s)) ?> - <?= e($s['seat_type']) ?> - <?= e(money(seat_price($showtime, $s))) ?>
+              <?= isset($taken[$id]) ? '(booked)' : (in_array($id, $held, true) ? '(on your short-list)' : '') ?>
+            </label>
+          <?php endforeach; ?>
+        </fieldset>
+      </noscript>
 
       <div class="legend">
         <span><i></i> Standard <?= e(money($basePrice)) ?></span>
@@ -175,9 +195,9 @@ require __DIR__ . '/includes/header.php';
         <?php endif; ?>
       </div>
 
-      <p class="small muted center" style="margin-top:1.2rem;">
+      <p class="small muted center seat-keyboard-help" style="margin-top:1.2rem;">
         Use the arrow keys to move between seats and Enter or Space to
-        select one. Up to <?= (int) MAX_SEATS_PER_BOOKING ?> seats per screening.
+        select one. On smaller screens, scroll the seat map horizontally. Up to <?= (int) MAX_SEATS_PER_BOOKING ?> seats per screening.
       </p>
     </div>
 
@@ -227,13 +247,13 @@ require __DIR__ . '/includes/header.php';
             <span class="amount" id="sum-total"><?= e(money(0)) ?></span>
           </div>
 
-          <p class="small muted" id="seat-hint" style="margin:.9rem 0 1rem;">
+          <p class="small muted" id="seat-hint" role="status" aria-live="polite" aria-atomic="true" style="margin:.9rem 0 1rem;">
             Pick at least one seat to continue.
           </p>
 
-          <button type="submit" id="add-btn" class="btn btn-primary btn-block is-disabled"
+          <button type="submit" id="add-btn" class="btn btn-primary btn-block"
                   data-busy="Adding&hellip;">
-            <?= is_logged_in() ? 'Add to short-list' : 'Sign in and hold these seats' ?>
+            <?= is_logged_in() ? 'Add to short-list' : 'Save selection and sign in' ?>
           </button>
 
           <p class="center" style="margin:.8rem 0 0;">
@@ -246,8 +266,9 @@ require __DIR__ . '/includes/header.php';
         <p class="small muted" style="margin:0;">
           Adding a screening to your short-list does not charge you. You
           choose which entries to confirm on the
-          <a href="preferences.php">short-list page</a>, and only then is
-          payment taken and the seats issued.
+          <a href="preferences.php">short-list page</a>, and only then
+          is payment simulated and seats are secured. A short-list does not reserve seats;
+          another customer may confirm them first.
         </p>
 
         <?php if (is_logged_in()):

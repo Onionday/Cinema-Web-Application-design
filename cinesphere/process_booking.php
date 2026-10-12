@@ -146,6 +146,15 @@ foreach ($toBook as $p) {
     $conn->begin_transaction();
 
     try {
+        $live = db_one('SELECT status, show_date, show_time FROM showtimes WHERE showtime_id = ? FOR UPDATE',
+                       [(int) $p['showtime_id']]);
+        if (!$live || $live['status'] !== 'open' || showtime_has_passed($live)) {
+            throw new RuntimeException('This screening is no longer available.');
+        }
+        $choice = db_one('SELECT pref_id FROM preferences WHERE pref_id = ? AND user_id = ? FOR UPDATE',
+                         [(int) $p['pref_id'], $user_id]);
+        if (!$choice) { throw new RuntimeException('This choice has already been processed.'); }
+
         /* Last-moment re-check inside the transaction. */
         $taken = get_taken_seat_ids((int) $p['showtime_id']);
         $clash = [];
@@ -187,6 +196,8 @@ foreach ($toBook as $p) {
                 'iiid'
             );
         }
+
+        archive_booking_seats($booking_id);
 
         /* DELETE - the entry has become a booking, so it leaves the
            short-list. */
@@ -234,7 +245,7 @@ if (!$confirmed) {
 if ($lost) {
     $names = implode(', ', array_column($lost, 'title'));
     flash('warning', 'We could not complete ' . count($lost) . ' of your selections ('
-                   . $names . ') because the seats went in the last few seconds. '
+                   . $names . ') because a screening or selection was no longer available. '
                    . 'Only the successful bookings below were charged.');
 }
 
@@ -247,9 +258,7 @@ if ($rejected) {
 if ($mailed > 0) {
     flash('success', 'Acknowledgement '
                    . ($mailed === 1 ? 'email has' : 'emails have')
-                   . ' been sent to ' . $me['email']
-                   . (MAIL_MODE === 'file'
-                      ? ' (written to the project\'s mail folder).' : '.'));
+                   . ' been delivered to the local coursework inbox.');
 } else {
     flash('warning', 'Your booking is confirmed, but the acknowledgement email '
                    . 'could not be sent. Your reference below is all you need '

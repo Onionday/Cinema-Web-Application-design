@@ -10,6 +10,8 @@
  * ===================================================================== */
 
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/scheduling.php';
+require_once __DIR__ . '/includes/mailer.php';
 
 require_post();
 require_admin();
@@ -87,33 +89,6 @@ switch ($action) {
                                   . money(5) . ' and ' . money(60) . '.';
         }
 
-        /* -- the hall must be free: nothing may start within the runtime
-              of this film plus 20 minutes of turnaround, either side -- */
-        if (!$errors) {
-            $runtime = (int) $movie['duration_min'] + 20;
-            $startTs = strtotime($show_date . ' ' . $show_time);
-
-            $sameDay = db_all(
-                'SELECT st.show_time, m.title, m.duration_min
-                   FROM showtimes st JOIN movies m ON m.movie_id = st.movie_id
-                  WHERE st.hall_id = ? AND st.show_date = ? AND st.status <> ?',
-                [$hall_id, $show_date, 'cancelled']
-            );
-
-            foreach ($sameDay as $other) {
-                $oStart = strtotime($show_date . ' ' . $other['show_time']);
-                $oEnd   = $oStart + ((int) $other['duration_min'] + 20) * 60;
-                $myEnd  = $startTs + $runtime * 60;
-
-                if ($startTs < $oEnd && $myEnd > $oStart) {
-                    $errors['show_time'] = $hall['hall_name'] . ' is busy then - '
-                        . $other['title'] . ' runs from '
-                        . pretty_time($other['show_time']) . '.';
-                    break;
-                }
-            }
-        }
-
         if ($errors) {
             stash_form('showtime', $errors, [
                 'movie_id'   => $movie_id,
@@ -127,16 +102,23 @@ switch ($action) {
             redirect('admin.php');
         }
 
-        /* INSERT */
+        $conn = db();
+        $conn->begin_transaction();
         try {
+            lock_hall($hall_id);
+            $conflict = screening_conflict($hall_id, $show_date, $show_time, (int) $movie['duration_min']);
+            if ($conflict) { throw new RuntimeException(conflict_message($conflict)); }
             db_execute(
                 'INSERT INTO showtimes (movie_id, hall_id, show_date, show_time, format, base_price)
                  VALUES (?, ?, ?, ?, ?, ?)',
                 [$movie_id, $hall_id, $show_date, $show_time, $format, $price],
                 'iisssd'
             );
+            $conn->commit();
         } catch (Throwable $ex) {
-            flash('error', 'That hall already has a screening at exactly that time.');
+            $conn->rollback();
+            flash('error', $ex instanceof mysqli_sql_exception
+                ? 'The screening could not be saved; check whether that time already exists.' : $ex->getMessage());
             redirect('admin.php');
         }
 
@@ -192,34 +174,40 @@ switch ($action) {
             redirect('admin.php');
         }
 
-        $affected = (int) (db_one(
-            "SELECT COUNT(*) AS n FROM bookings
-              WHERE showtime_id = ? AND booking_status = 'confirmed'",
-            [$showtime_id]
-        )['n'] ?? 0);
-
-        /* UPDATE - the screening is closed ... */
-        db_execute("UPDATE showtimes SET status = 'cancelled' WHERE showtime_id = ?",
-                   [$showtime_id]);
-
-        /* ... and every booking on it is cancelled and refunded. */
-        if ($affected > 0) {
-            db_execute(
-                "UPDATE bookings
-                    SET booking_status = 'cancelled', payment_status = 'refunded'
-                  WHERE showtime_id = ? AND booking_status = 'confirmed'",
-                [$showtime_id]
-            );
-
+        $conn = db();
+        $conn->begin_transaction();
+        $notices = [];
+        try {
+            lock_hall((int) $st['hall_id']);
+            db_one('SELECT showtime_id FROM showtimes WHERE showtime_id = ? FOR UPDATE', [$showtime_id]);
+            $bookings = db_all("SELECT booking_id FROM bookings
+                WHERE showtime_id = ? AND booking_status = 'confirmed' FOR UPDATE", [$showtime_id]);
+            foreach ($bookings as $row) {
+                $bid = (int) $row['booking_id'];
+                archive_booking_seats($bid);
+                $notices[] = [get_booking($bid), get_booking_seats($bid)];
+            }
+            db_execute("UPDATE showtimes SET status = 'cancelled' WHERE showtime_id = ?", [$showtime_id]);
+            db_execute("UPDATE bookings SET booking_status = 'cancelled', payment_status = 'refunded'
+                         WHERE showtime_id = ? AND booking_status = 'confirmed'", [$showtime_id]);
             db_execute('DELETE FROM booking_seats WHERE showtime_id = ?', [$showtime_id]);
+            $conn->commit();
+        } catch (Throwable $ex) {
+            $conn->rollback();
+            flash('error', 'The screening could not be cancelled. No cancellation changes were saved.');
+            redirect('admin.php');
         }
-
-        flash('success', $st['title'] . ' on ' . pretty_date($st['show_date'])
-                       . ' at ' . pretty_time($st['show_time']) . ' has been cancelled'
-                       . ($affected > 0
-                          ? ", and {$affected} booking" . ($affected === 1 ? '' : 's')
-                            . ' refunded.'
-                          : '. No seats had been sold.'));
+        $failed = 0;
+        foreach ($notices as [$booking, $seats]) {
+            if (!send_cancellation_notice($booking, $seats)) { $failed++; }
+        }
+        flash('success', $st['title'] . ' has been cancelled. ' . count($notices)
+              . ' bookings refunded; original seat details remain in booking history.');
+        if ($failed) {
+            flash('warning', $failed . ' cancellation emails could not be delivered. Check the local mail server.');
+        } elseif ($notices) {
+            flash('success', 'Cancellation notices delivered to the local coursework inbox.');
+        }
         redirect('admin.php');
 
 
@@ -241,9 +229,25 @@ switch ($action) {
             redirect('admin.php');
         }
 
-        /* UPDATE */
-        db_execute("UPDATE showtimes SET status = 'open' WHERE showtime_id = ?",
-                   [$showtime_id]);
+        $conn = db();
+        $conn->begin_transaction();
+        try {
+            lock_hall((int) $st['hall_id']);
+            $live = db_one('SELECT status FROM showtimes WHERE showtime_id = ? FOR UPDATE', [$showtime_id]);
+            if (!$live || $live['status'] !== 'cancelled') {
+                throw new RuntimeException('This screening is already open or no longer exists.');
+            }
+            $conflict = screening_conflict((int) $st['hall_id'], $st['show_date'],
+                $st['show_time'], (int) $st['duration_min'], $showtime_id);
+            if ($conflict) { throw new RuntimeException(conflict_message($conflict)); }
+            db_execute("UPDATE showtimes SET status = 'open' WHERE showtime_id = ?", [$showtime_id]);
+            $conn->commit();
+        } catch (Throwable $ex) {
+            $conn->rollback();
+            flash('error', $ex instanceof mysqli_sql_exception
+                ? 'The screening could not be reopened.' : $ex->getMessage());
+            redirect('admin.php');
+        }
 
         flash('success', $st['title'] . ' on ' . pretty_date($st['show_date'])
                        . ' is on sale again.');

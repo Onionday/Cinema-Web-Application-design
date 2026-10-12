@@ -11,7 +11,7 @@
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');            // XAMPP's MySQL root password is blank
-define('DB_NAME', 'cinesphere');
+define('DB_NAME', getenv('CINESPHERE_DB_NAME') ?: 'cinesphere');
 define('DB_PORT', 3306);
 
 /* ---------- Site identity ----------------------------------------- */
@@ -26,14 +26,14 @@ define('WEEKEND_SURCHARGE',  2.00);   // added on Sat / Sun screenings
 define('BOOKING_FEE',        0.80);   // per ticket
 define('CURRENCY',           'S$');
 
-/* ---------- Mail -----------------------------------------------------
- * 'file' writes each acknowledgement into includes/../mail/ as an .eml
- *        file. This is the default, and is what the project guidelines
- *        ask for - nothing leaves the local web server.
- * 'mail' calls PHP's mail() instead (needs a configured MTA / sendmail).
+/* ---------- Local coursework mail ----------------------------------
+ * PHP mail() delivers to the local SMTP server. All messages go to the
+ * single coursework mailbox, never to a customer's external address.
+ * Windows php.ini: SMTP=127.0.0.1, smtp_port=1025, sendmail_from below.
+ * On Linux/XAMPP configure a local-only sendmail transport instead.
+ * See README.md for the Mailpit inbox and verification steps.
  * ------------------------------------------------------------------ */
-define('MAIL_MODE', 'file');
-define('MAIL_DIR',  dirname(__DIR__) . DIRECTORY_SEPARATOR . 'mail');
+define('MAIL_LOCAL_ACCOUNT', 'coursework@cinesphere.local');
 
 /* ---------- Error reporting --------------------------------------
  * Development: show everything. Set DEBUG to false before submission

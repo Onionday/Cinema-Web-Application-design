@@ -852,46 +852,7 @@ INSERT INTO showtimes (showtime_id, movie_id, hall_id, show_date, show_time, for
   (209, 5, 6, DATE_ADD(CURDATE(), INTERVAL 6 DAY), '19:45:00', '2D', 20.50),
   (210, 6, 6, DATE_ADD(CURDATE(), INTERVAL 6 DAY), '22:30:00', '2D', 18.00);
 
--- ------------------------------------------------------------------
--- Sample bookings, so seat maps show occupied seats from the start
--- ------------------------------------------------------------------
-INSERT INTO bookings (booking_id, booking_ref, user_id, showtime_id, seat_count,
-                      total_amount, booking_status, payment_status, email_sent, booked_at) VALUES
-  (1, 'CS100001', 2, 4, 2, 31.00, 'confirmed', 'paid', 1, DATE_SUB(NOW(), INTERVAL 5 HOUR)),
-  (2, 'CS100002', 3, 4, 3, 46.50, 'confirmed', 'paid', 1, DATE_SUB(NOW(), INTERVAL 10 HOUR)),
-  (3, 'CS100003', 3, 4, 2, 31.00, 'confirmed', 'paid', 1, DATE_SUB(NOW(), INTERVAL 15 HOUR)),
-  (4, 'CS100004', 2, 39, 2, 45.00, 'confirmed', 'paid', 1, DATE_SUB(NOW(), INTERVAL 20 HOUR)),
-  (5, 'CS100005', 3, 39, 4, 90.00, 'confirmed', 'paid', 1, DATE_SUB(NOW(), INTERVAL 25 HOUR)),
-  (6, 'CS100006', 2, 78, 2, 37.00, 'confirmed', 'paid', 1, DATE_SUB(NOW(), INTERVAL 30 HOUR)),
-  (7, 'CS100007', 3, 15, 3, 39.00, 'confirmed', 'paid', 1, DATE_SUB(NOW(), INTERVAL 35 HOUR)),
-  (8, 'CS100008', 2, 112, 2, 22.00, 'confirmed', 'paid', 1, DATE_SUB(NOW(), INTERVAL 40 HOUR)),
-  (9, 'CS100009', 3, 60, 3, 66.00, 'confirmed', 'paid', 1, DATE_SUB(NOW(), INTERVAL 45 HOUR)),
-  (10, 'CS100010', 2, 33, 2, 27.00, 'cancelled', 'refunded', 1, DATE_SUB(NOW(), INTERVAL 50 HOUR));
-
-INSERT INTO booking_seats (booking_id, showtime_id, seat_id, seat_price) VALUES
-  (1, 4, 53, 15.50),
-  (1, 4, 54, 15.50),
-  (2, 4, 55, 15.50),
-  (2, 4, 56, 15.50),
-  (2, 4, 57, 15.50),
-  (3, 4, 61, 15.50),
-  (3, 4, 62, 15.50),
-  (4, 39, 186, 22.50),
-  (4, 39, 187, 22.50),
-  (5, 39, 198, 22.50),
-  (5, 39, 199, 22.50),
-  (5, 39, 200, 22.50),
-  (5, 39, 201, 22.50),
-  (6, 78, 365, 18.50),
-  (6, 78, 366, 18.50),
-  (7, 15, 270, 13.00),
-  (7, 15, 271, 13.00),
-  (7, 15, 272, 13.00),
-  (8, 112, 409, 11.00),
-  (8, 112, 410, 11.00),
-  (9, 60, 529, 22.00),
-  (9, 60, 530, 22.00),
-  (9, 60, 531, 22.00);
+-- Bookings start empty. Seats are occupied only by bookings made through the site.
 
 -- ------------------------------------------------------------------
 -- Sample feedback messages (seen on the admin page)

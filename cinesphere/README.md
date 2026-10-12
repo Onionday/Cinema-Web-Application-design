@@ -22,7 +22,7 @@ generated on the server and every style is hand-written.
    | Order | File | What it does |
    |---|---|---|
    | 1 | `sql/01_schema.sql` | Creates the `cinesphere` database and all twelve tables |
-   | 2 | `sql/02_seed.sql` | Loads the sample films, halls, seats, schedule and bookings |
+   | 2 | `sql/02_seed.sql` | Loads the sample films, halls, seats and schedule; all seats start available |
 
    From a terminal the equivalent is:
 
@@ -57,6 +57,15 @@ Back up the existing database, then import `sql/03_booking_history.sql` only.
 It adds and backfills seat history without resetting users, preferences or bookings.
 New installations already get this table from `01_schema.sql`.
 Previously cancelled seats that were deleted by the old version cannot be recovered.
+
+### Remove demo bookings from an existing installation
+
+Back up the database, then import `sql/04_remove_demo_bookings.sql`.
+It removes only the ten original seeded bookings and their seat allocations/history,
+matching their original IDs, references, users and screenings. Bookings made
+through the website are preserved. It is safe to run again.
+Do not re-import `01_schema.sql` or `02_seed.sql` on an existing installation:
+those reset application data. Fresh installations already start without bookings.
 
 ### Email and the portable local preview
 

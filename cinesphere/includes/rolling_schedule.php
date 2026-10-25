@@ -5,10 +5,12 @@
  * Keeps the schedule "always this week" without anyone re-importing
  * the seed data or adding screenings by hand.
  *
- * On each request it asks one cheap question: does the showtimes table
- * reach six days from today? If it does, nothing else happens. If not,
- * the missing days are filled by copying the same weekday from the most
- * recent week on record (Monday copies the last Monday, and so on).
+ * On each request it asks one cheap question: does every day from today
+ * to six days ahead have at least one screening? If so, nothing else
+ * happens. Any day with no screenings at all is filled by copying the
+ * same weekday from the most recent week that has one (Monday copies the
+ * last Monday, and so on). A day staff have scheduled anything on is
+ * left exactly as they planned it.
  *
  *   - Past screenings are never changed or deleted, so booking history
  *     and e-tickets keep pointing at the screening they were sold for.
@@ -32,17 +34,21 @@ if (!defined('SCHEDULE_DAYS_AHEAD')) {
     define('SCHEDULE_DAYS_AHEAD', 7);   // today plus the next six days
 }
 
-/** Days between two Y-m-d dates (b - a). */
-function days_between(string $a, string $b): int
+/** The dates between $from and $to (inclusive) that have no screenings at all. */
+function unscheduled_days(string $from, string $to): array
 {
-    return (int) round((strtotime($b . ' 12:00') - strtotime($a . ' 12:00')) / 86400);
-}
-
-/** Last date on the schedule, or null when there are no screenings. */
-function last_scheduled_date(): ?string
-{
-    $row = db_one('SELECT MAX(show_date) AS last_day FROM showtimes');
-    return $row && $row['last_day'] ? (string) $row['last_day'] : null;
+    $have = [];
+    foreach (db_all('SELECT DISTINCT show_date FROM showtimes WHERE show_date BETWEEN ? AND ?',
+                    [$from, $to]) as $r) {
+        $have[(string) $r['show_date']] = true;
+    }
+    $missing = [];
+    for ($d = $from; $d <= $to; $d = date('Y-m-d', strtotime($d . ' +1 day'))) {
+        if (!isset($have[$d])) {
+            $missing[] = $d;
+        }
+    }
+    return $missing;
 }
 
 /**
@@ -61,9 +67,9 @@ function ensure_rolling_schedule(): int
     $today  = date('Y-m-d');
     $target = date('Y-m-d', strtotime('+' . (SCHEDULE_DAYS_AHEAD - 1) . ' days'));
 
-    $last = last_scheduled_date();
-    if ($last === null || $last >= $target) {
-        return 0;   // empty database (import the seed) or already up to date
+    /* The usual case: every day of the coming week already has screenings. */
+    if (!unscheduled_days($today, $target)) {
+        return 0;
     }
 
     /* Only one request at a time may extend the schedule. */
@@ -74,26 +80,15 @@ function ensure_rolling_schedule(): int
 
     $added = 0;
     try {
-        /* Another request may have finished the job while we waited. */
-        $last = last_scheduled_date();
-        if ($last === null || $last >= $target) {
-            return 0;
-        }
+        /* Another request may have filled some days while we waited. A day
+           staff have put anything on (even one screening) is left as planned. */
+        foreach (unscheduled_days($today, $target) as $d) {
 
-        /* Days already in the past are skipped: nobody can book them. */
-        $first = date('Y-m-d', max(strtotime($today), strtotime($last . ' +1 day')));
-
-        for ($d = $first; $d <= $target; $d = date('Y-m-d', strtotime($d . ' +1 day'))) {
-
-            /* Same weekday in the last complete week on record. */
-            $gap    = days_between($last, $d);                 // at least 1
-            $source = date('Y-m-d', strtotime($d . ' -' . (7 * (int) ceil($gap / 7)) . ' days'));
-
-            /* If that weekday had nothing to copy (e.g. staff cancelled every
-               screening), look one week further back, up to four weeks. */
+            /* Copy the same weekday from the most recent week that has one,
+               looking back up to eight weeks. */
             $template = [];
-            for ($weeksBack = 0; $weeksBack < 4 && !$template; $weeksBack++) {
-                $from = date('Y-m-d', strtotime($source . ' -' . (7 * $weeksBack) . ' days'));
+            for ($weeksBack = 1; $weeksBack <= 8 && !$template; $weeksBack++) {
+                $from = date('Y-m-d', strtotime($d . ' -' . (7 * $weeksBack) . ' days'));
                 $template = db_all(
                     "SELECT st.movie_id, st.hall_id, st.show_time, st.format,
                             st.base_price, m.duration_min

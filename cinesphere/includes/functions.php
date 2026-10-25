@@ -116,7 +116,10 @@ function csrf_field(): string
 function csrf_check(): void
 {
     $posted = $_POST['csrf'] ?? '';
-    if (!is_string($posted) || !hash_equals($_SESSION['csrf'] ?? '', $posted)) {
+    $token  = (string) ($_SESSION['csrf'] ?? '');
+    /* An empty token must never match: a visitor with no session token
+       who posts no token would otherwise pass ('' equals ''). */
+    if (!is_string($posted) || $posted === '' || $token === '' || !hash_equals($token, $posted)) {
         http_response_code(400);
         flash('error', 'Your session expired before the form was submitted. Please try again.');
         redirect('index.php');

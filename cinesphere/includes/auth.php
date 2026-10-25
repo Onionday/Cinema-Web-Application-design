@@ -7,6 +7,11 @@
  * ===================================================================== */
 
 require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/rolling_schedule.php';
+
+/* Top up the schedule so the next seven days always have screenings.
+   One quick SELECT on most requests; see includes/rolling_schedule.php. */
+ensure_rolling_schedule();
 
 function is_logged_in(): bool
 {

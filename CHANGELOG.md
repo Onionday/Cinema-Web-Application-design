@@ -1,5 +1,55 @@
 # Changes to the CineSphere base version
 
+## 26 October 2026
+
+New staff features, a self-maintaining schedule, an automated test suite, and
+two bug fixes found by those tests. Still Base Version technology only (HTML,
+CSS, JavaScript, PHP, MySQL); the page count is unchanged at home + 10.
+
+### Rolling schedule
+
+| Change | Why |
+|---|---|
+| `includes/rolling_schedule.php`: on each page load, any of the next 7 days with no screenings is filled by copying the same weekday from the latest week that has one | The seed dates screenings relative to the import day, so a week after importing the schedule went empty and nothing could be booked |
+| Copies skip cancelled screenings, films not "now showing", and anything that would clash in a hall; a day staff have scheduled is left as planned; a database lock prevents double filling | Keeps the generated schedule as valid as one entered by staff |
+
+### Staff booking tools and ticket prices (`admin.php`)
+
+| Change | Why |
+|---|---|
+| **Manage a booking**: find by reference (or *Manage* under Recent bookings) | Staff needed to change a booking on a customer's behalf |
+| Refund selected seats (e.g. bought 3, refund 1): seat price + S$0.80 fee returned, seat back on sale; refunding all seats cancels the booking | Partial refunds were not possible before |
+| Move a seat to any free seat at the same screening; customer keeps the price paid and only the seat-type difference is added or refunded | Seat changes without cancelling and rebooking |
+| Cancel and refund a whole booking, with no 2-hour cut-off for staff | Box-office cancellations |
+| Every change needs a reason, emails the customer and is logged in the new `booking_adjustments` table (who, when, why, amount) | Accountability, and a record for refunds |
+| Base price box per screening in the upcoming schedule (S$5 to S$60, 50-cent steps); paid bookings keep their price; open short-lists for that screening are re-priced | Staff can change ticket prices after scheduling |
+
+New files: `includes/booking_admin.php`, `sql/05_booking_adjustments.sql`.
+Updated: `admin.php`, `admin_action.php`, `includes/mailer.php`, `includes/auth.php`,
+`sql/01_schema.sql`.
+
+### Automated tests (`tests/`)
+
+| File | Covers |
+|---|---|
+| `run_tests.php` | 42 cases across F1 to F10, security, double sales, email, staff tools and the rolling schedule. Needs only XAMPP; uses a throw-away database and catches emails locally |
+| `ui_tests.js` | 6 browser cases: JavaScript validation, seat picker, keyboard use, phone layout (Playwright) |
+| `test-results.md`, `ui-test-results.md` | Result tables in the report's format: input, expected output, method, result |
+
+Result: 42/42 and 6/6 passed.
+
+### Bugs fixed
+
+| Bug | Fix |
+|---|---|
+| A form posted with no CSRF token was accepted when the visitor's session had no token yet (empty compared equal to empty). Found by test TC13 | `csrf_check()` in `includes/functions.php` now rejects empty tokens |
+| Rolling schedule first version stopped filling the week if staff scheduled one screening further ahead | Now checks each of the next 7 days individually |
+
+### To set up on an existing database
+
+Import `cinesphere/sql/05_booking_adjustments.sql` once (adds one table; nothing
+else is touched).
+
 ## 10 October 2026
 
 This branch improves the existing PHP/MySQL prototype. It keeps the native HTML,

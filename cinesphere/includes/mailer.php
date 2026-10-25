@@ -120,3 +120,37 @@ function send_contact_ack(string $name, string $to, string $subject_line, int $r
 
     return send_mail($to, SITE_NAME . ' - we received your message (#CM' . $ref . ')', $body);
 }
+
+/**
+ * Tells the customer that staff changed their booking: some seats
+ * refunded, or a seat moved. $amount < 0 is money returned to them,
+ * $amount > 0 is extra to pay at the box office.
+ */
+function send_booking_change_notice(array $booking, array $seats, string $what, float $amount): bool
+{
+    $when = pretty_date($booking['show_date']) . ' at ' . pretty_time($booking['show_time']);
+    if ($amount < 0) {
+        $money = "  Refund : " . money(-$amount) . " to the original payment method\n";
+    } elseif ($amount > 0) {
+        $money = "  To pay : " . money($amount) . " at the box office before the film\n";
+    } else {
+        $money = "  Price  : no change\n";
+    }
+
+    $body = "Hello {$booking['full_name']},\n\n"
+          . "Our staff have updated booking {$booking['booking_ref']}.\n\n"
+          . "  Change : {$what}\n"
+          . $money
+          . "  Film   : {$booking['title']}\n"
+          . "  When   : {$when}\n"
+          . "  Seats  : " . seat_list_text($seats) . "\n"
+          . "  Total  : " . money($booking['total_amount']) . "\n\n"
+          . "Your e-ticket under My bookings already shows the new details.\n\n"
+          . "- " . SITE_NAME . "\n";
+
+    return send_mail(
+        $booking['email'],
+        SITE_NAME . ' booking ' . $booking['booking_ref'] . ' updated',
+        $body
+    );
+}

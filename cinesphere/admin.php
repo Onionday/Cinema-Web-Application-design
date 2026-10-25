@@ -6,9 +6,14 @@
  * project's INSERT and UPDATE statements against the catalogue live:
  * new screenings are scheduled, films are moved between "coming soon"
  * and "now showing", screenings are cancelled and feedback is triaged.
+ *
+ * admin.php?booking=CS1A2B3C26 opens one booking for staff to refund
+ * seats, move a seat or cancel it; the upcoming schedule lets staff
+ * change a screening's ticket price. Both post to admin_action.php.
  * ===================================================================== */
 
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/booking_admin.php';
 
 require_admin();
 
@@ -77,13 +82,36 @@ $schedule = db_all(
       LIMIT 20"
 );
 
+/* ---- One booking to manage (admin.php?booking=REF) ---------------- */
+$lookupRaw   = trim((string) ($_GET['booking'] ?? ''));
+$lookupRef   = v_booking_ref($lookupRaw);
+$manage      = $lookupRef !== '' ? find_booking_by_ref($lookupRef) : null;
+$manageHeld  = [];   // seats the booking holds now
+$manageSeats = [];   // what to list (history for cancelled bookings)
+$manageFree  = [];   // free seats a held seat can move to
+$manageLog   = [];
+$canChange   = false;
+
+if ($manage) {
+    $bid         = (int) $manage['booking_id'];
+    $manageHeld  = get_held_seats($bid);
+    $manageSeats = $manageHeld ?: get_booking_seats($bid);
+    $manageLog   = get_booking_adjustments($bid);
+    $canChange   = $manage['booking_status'] === 'confirmed'
+                   && !showtime_has_passed($manage) && $manageHeld;
+    if ($canChange) {
+        $mst        = get_showtime((int) $manage['showtime_id']);
+        $manageFree = get_free_seats((int) $manage['showtime_id'], (int) $mst['hall_id']);
+    }
+}
+
 $form = take_form('showtime');
 $fErr = $form['errors'];
 $fOld = $form['old'];
 
 $page_title       = 'Staff';
-$page_description = 'CineSphere staff tools: schedule screenings, manage the '
-                  . 'catalogue and triage guest feedback.';
+$page_description = 'CineSphere staff tools: schedule screenings, set ticket prices, '
+                  . 'manage customer bookings and triage guest feedback.';
 $page_scripts     = ['validate.js'];
 
 require __DIR__ . '/includes/header.php';
@@ -98,7 +126,8 @@ require __DIR__ . '/includes/header.php';
     <span class="eyebrow">Signed in as <?= e($me['full_name']) ?></span>
     <h1>Staff tools</h1>
     <p class="lede">
-      Schedule screenings, move films on and off release, cancel a show and
+      Schedule screenings and set their prices, move films on and off
+      release, refund or change a customer's booking, cancel a show and
       work through guest feedback. Every action here writes straight to the
       database the public pages read from.
     </p>
@@ -113,6 +142,193 @@ require __DIR__ . '/includes/header.php';
     <div class="stat"><span class="n"><?= e(money($kpi['revenue'])) ?></span><span class="l">Gross takings</span></div>
     <div class="stat"><span class="n"><?= (int) $kpi['seats_sold'] ?></span><span class="l">Seats sold</span></div>
     <div class="stat"><span class="n"><?= (int) $kpi['new_msgs'] ?></span><span class="l">Unread messages</span></div>
+  </div>
+
+  <!-- ============== MANAGE A BOOKING (UPDATE / DELETE) ========== -->
+  <div class="panel" id="manage">
+    <div class="panel-head">
+      <h2>Manage a booking</h2>
+      <span class="badge badge-gold">UPDATE &middot; DELETE</span>
+    </div>
+    <div class="panel-body">
+
+      <form method="get" action="admin.php#manage" class="form-actions" style="margin-bottom:1.2rem;" data-validate>
+        <div class="field" style="flex:1 1 220px;margin:0;">
+          <label for="m-ref">Booking reference</label>
+          <input type="text" name="booking" id="m-ref" value="<?= e($lookupRaw) ?>"
+                 placeholder="e.g. CS1A2B3C26" required minlength="4" maxlength="16"
+                 pattern="[A-Za-z0-9]{4,16}" autocomplete="off"
+                 data-check="required">
+          <span class="error"></span>
+        </div>
+        <button type="submit" class="btn btn-primary" style="align-self:flex-end;">Find booking</button>
+        <span class="small muted" style="align-self:flex-end;">Or choose <em>Manage</em> on a row under Recent bookings.</span>
+      </form>
+
+      <?php if ($lookupRaw !== '' && !$manage): ?>
+        <p class="notice notice-warning">No booking has the reference <code><?= e($lookupRaw) ?></code>.</p>
+      <?php endif; ?>
+
+      <?php if ($manage): ?>
+        <div class="table-wrap">
+          <table class="data" style="min-width:auto;">
+            <caption>Booking <code><?= e($manage['booking_ref']) ?></code></caption>
+            <tbody>
+              <tr><th scope="row">Customer</th>
+                  <td><?= e($manage['full_name']) ?> <span class="small muted">&middot; <?= e($manage['email']) ?></span></td></tr>
+              <tr><th scope="row">Screening</th>
+                  <td><?= e($manage['title']) ?> &middot; <?= e(pretty_date($manage['show_date'])) ?>,
+                      <?= e(pretty_time($manage['show_time'])) ?> &middot; <?= e($manage['cinema_name']) ?>,
+                      <?= e($manage['hall_name']) ?></td></tr>
+              <tr><th scope="row">Status</th>
+                  <td><span class="badge <?= $manage['booking_status'] === 'confirmed' ? 'badge-good'
+                        : ($manage['booking_status'] === 'cancelled' ? 'badge-sold' : 'badge-mid') ?>">
+                        <?= e(ucfirst($manage['booking_status'])) ?></span>
+                      <span class="small muted">payment <?= e($manage['payment_status']) ?></span></td></tr>
+              <tr><th scope="row">Seats</th>
+                  <td><?= (int) $manage['seat_count'] ?> &middot; <?= e(seat_list_text($manageSeats)) ?></td></tr>
+              <tr><th scope="row">Total paid</th>
+                  <td><?= e(money($manage['total_amount'])) ?>
+                      <span class="small muted">(seat prices + <?= e(money(BOOKING_FEE)) ?> fee per seat)</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <?php if (!$canChange): ?>
+          <p class="notice notice-info" style="margin-top:1rem;">
+            This booking can no longer be changed: only confirmed bookings for
+            screenings that have not started can be refunded or moved.
+          </p>
+        <?php else: ?>
+
+          <div class="admin-grid" style="margin-top:1.4rem;">
+
+            <!-- Refund selected seats -->
+            <form method="post" action="admin_action.php" data-validate>
+              <?= csrf_field() ?>
+              <input type="hidden" name="action" value="refund_seats">
+              <input type="hidden" name="booking_id" value="<?= (int) $manage['booking_id'] ?>">
+              <h3>Refund seats</h3>
+              <p class="small muted">Tick the seats to refund. Each returns its price plus its
+                <?= e(money(BOOKING_FEE)) ?> fee, and goes back on sale.</p>
+              <fieldset class="field" style="border:0;padding:0;margin:0 0 1rem;">
+                <legend class="sr-only">Seats to refund</legend>
+                <?php foreach ($manageHeld as $s): ?>
+                  <label class="check-row">
+                    <input type="checkbox" name="seat_ids[]" value="<?= (int) $s['seat_id'] ?>">
+                    <span><strong><?= e($s['seat_row'] . $s['seat_number']) ?></strong>
+                      &middot; <?= e($s['seat_type']) ?> &middot; <?= e(money($s['seat_price'])) ?></span>
+                  </label>
+                <?php endforeach; ?>
+              </fieldset>
+              <div class="field">
+                <label for="r-reason">Reason <span class="req">*</span></label>
+                <input type="text" name="reason" id="r-reason" required minlength="5" maxlength="160"
+                       placeholder="e.g. Guest can no longer attend with one friend"
+                       data-check="required minlen" data-minlen="5">
+                <span class="error"></span>
+              </div>
+              <button type="submit" class="btn btn-ghost" data-confirm="Press again to refund">
+                Refund selected seats
+              </button>
+            </form>
+
+            <!-- Move one seat -->
+            <form method="post" action="admin_action.php" data-validate>
+              <?= csrf_field() ?>
+              <input type="hidden" name="action" value="move_seat">
+              <input type="hidden" name="booking_id" value="<?= (int) $manage['booking_id'] ?>">
+              <h3>Change a seat</h3>
+              <p class="small muted">The customer keeps the price paid; only a different seat
+                type adds or refunds the surcharge difference.</p>
+              <div class="field">
+                <label for="mv-from">Seat to move <span class="req">*</span></label>
+                <select name="from_seat" id="mv-from" required data-check="choose">
+                  <option value="">Choose a seat&hellip;</option>
+                  <?php foreach ($manageHeld as $s): ?>
+                    <option value="<?= (int) $s['seat_id'] ?>">
+                      <?= e($s['seat_row'] . $s['seat_number']) ?> (<?= e($s['seat_type']) ?>)
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+                <span class="error"></span>
+              </div>
+              <div class="field">
+                <label for="mv-to">Move to <span class="req">*</span></label>
+                <select name="to_seat" id="mv-to" required data-check="choose">
+                  <option value="">Choose a free seat&hellip;</option>
+                  <?php foreach ($manageFree as $s): ?>
+                    <option value="<?= (int) $s['seat_id'] ?>">
+                      <?= e($s['seat_row'] . $s['seat_number']) ?> &middot; <?= e($s['seat_type']) ?>
+                      <?= (float) $s['surcharge'] > 0 ? '(+' . e(money($s['surcharge'])) . ')' : '' ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+                <span class="error"></span>
+              </div>
+              <div class="field">
+                <label for="mv-reason">Reason <span class="req">*</span></label>
+                <input type="text" name="reason" id="mv-reason" required minlength="5" maxlength="160"
+                       placeholder="e.g. Wheelchair access requested"
+                       data-check="required minlen" data-minlen="5">
+                <span class="error"></span>
+              </div>
+              <button type="submit" class="btn btn-ghost">Move seat</button>
+            </form>
+          </div>
+
+          <!-- Cancel the whole booking -->
+          <form method="post" action="admin_action.php" class="form-actions" data-validate
+                style="margin-top:.6rem;padding-top:1.2rem;border-top:1px solid var(--line-soft);">
+            <?= csrf_field() ?>
+            <input type="hidden" name="action" value="cancel_booking">
+            <input type="hidden" name="booking_id" value="<?= (int) $manage['booking_id'] ?>">
+            <div class="field" style="flex:1 1 260px;margin:0;">
+              <label for="c-reason">Reason for cancelling <span class="req">*</span></label>
+              <input type="text" name="reason" id="c-reason" required minlength="5" maxlength="160"
+                     placeholder="e.g. Customer called the box office"
+                     data-check="required minlen" data-minlen="5">
+              <span class="error"></span>
+            </div>
+            <button type="submit" class="btn btn-ghost" style="align-self:flex-end;"
+                    data-confirm="Press again to cancel and refund">
+              Cancel booking and refund <?= e(money($manage['total_amount'])) ?>
+            </button>
+          </form>
+        <?php endif; ?>
+
+        <h3 style="margin-top:1.6rem;">Change log</h3>
+        <?php if (!$manageLog): ?>
+          <p class="small muted">No staff changes to this booking yet.</p>
+        <?php else: ?>
+          <div class="table-wrap">
+            <table class="data" style="min-width:auto;">
+              <thead>
+                <tr>
+                  <th scope="col">When</th>
+                  <th scope="col">Change</th>
+                  <th scope="col">Reason</th>
+                  <th scope="col" class="num">Amount</th>
+                  <th scope="col">Staff</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach ($manageLog as $a): $amt = (float) $a['amount_change']; ?>
+                <tr>
+                  <td class="small nowrap"><?= e(date('j M, g:i A', strtotime($a['created_at']))) ?></td>
+                  <td class="small"><?= e($a['detail']) ?></td>
+                  <td class="small"><?= e($a['reason']) ?></td>
+                  <td class="num small nowrap"><?= $amt < 0 ? 'Refund ' . e(money(-$amt))
+                        : ($amt > 0 ? 'Collect ' . e(money($amt)) : '&mdash;') ?></td>
+                  <td class="small"><?= e($a['staff_name'] ?? 'Former staff') ?></td>
+                </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        <?php endif; ?>
+      <?php endif; ?>
+    </div>
   </div>
 
   <div class="admin-grid">
@@ -314,8 +530,8 @@ require __DIR__ . '/includes/header.php';
       </div>
 
 
-      <!-- ============= CANCEL A SCREENING (UPDATE) ============ -->
-      <div class="panel">
+      <!-- ====== CANCEL A SCREENING / SET ITS PRICE (UPDATE) ====== -->
+      <div class="panel" id="schedule">
         <div class="panel-head">
           <h2>Upcoming schedule</h2>
           <span class="badge badge-gold">UPDATE</span>
@@ -327,6 +543,7 @@ require __DIR__ . '/includes/header.php';
                 <tr>
                   <th scope="col">When</th>
                   <th scope="col">Film / hall</th>
+                  <th scope="col">Base price</th>
                   <th scope="col">Status</th>
                   <th scope="col"><span class="sr-only">Action</span></th>
                 </tr>
@@ -341,6 +558,25 @@ require __DIR__ . '/includes/header.php';
                   <td class="small">
                     <strong><?= e($s['title']) ?></strong><br>
                     <span class="muted"><?= e($s['hall_name']) ?> &middot; <?= e($s['format']) ?></span>
+                  </td>
+                  <td>
+                    <?php if ($s['status'] !== 'cancelled'): ?>
+                      <form method="post" action="admin_action.php" class="inline-form" style="gap:.3rem;">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="action" value="set_price">
+                        <input type="hidden" name="showtime_id" value="<?= (int) $s['showtime_id'] ?>">
+                        <label class="sr-only" for="p-<?= (int) $s['showtime_id'] ?>">
+                          Base price for <?= e($s['title']) ?> on <?= e(pretty_date($s['show_date'])) ?>
+                        </label>
+                        <input type="number" name="base_price" id="p-<?= (int) $s['showtime_id'] ?>"
+                               value="<?= e(number_format((float) $s['base_price'], 2, '.', '')) ?>"
+                               step="0.50" min="5" max="60" required
+                               style="width:5.2rem;padding:.3rem .4rem;background:var(--bg-sunken);color:var(--ink);border:1px solid var(--line);border-radius:6px;">
+                        <button type="submit" class="btn btn-ghost btn-sm">Set</button>
+                      </form>
+                    <?php else: ?>
+                      <span class="small muted"><?= e(money($s['base_price'])) ?></span>
+                    <?php endif; ?>
                   </td>
                   <td>
                     <span class="badge <?= $s['status'] === 'open' ? 'badge-good' : 'badge-sold' ?>">
@@ -452,6 +688,7 @@ require __DIR__ . '/includes/header.php';
               <th scope="col" class="num">Amount</th>
               <th scope="col">Status</th>
               <th scope="col">Booked</th>
+              <th scope="col"><span class="sr-only">Action</span></th>
             </tr>
           </thead>
           <tbody>
@@ -476,6 +713,10 @@ require __DIR__ . '/includes/header.php';
                 </span>
               </td>
               <td class="small nowrap"><?= e(date('j M, g:i A', strtotime($r['booked_at']))) ?></td>
+              <td>
+                <a class="btn btn-ghost btn-sm"
+                   href="admin.php?booking=<?= e(urlencode($r['booking_ref'])) ?>#manage">Manage</a>
+              </td>
             </tr>
             <?php endforeach; ?>
           </tbody>

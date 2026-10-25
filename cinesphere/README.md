@@ -21,7 +21,7 @@ generated on the server and every style is hand-written.
 
    | Order | File | What it does |
    |---|---|---|
-   | 1 | `sql/01_schema.sql` | Creates the `cinesphere` database and all twelve tables |
+   | 1 | `sql/01_schema.sql` | Creates the `cinesphere` database and all thirteen tables |
    | 2 | `sql/02_seed.sql` | Loads the sample films, halls, seats and schedule; all seats start available |
 
    From a terminal the equivalent is:
@@ -57,6 +57,12 @@ Back up the existing database, then import `sql/03_booking_history.sql` only.
 It adds and backfills seat history without resetting users, preferences or bookings.
 New installations already get this table from `01_schema.sql`.
 Previously cancelled seats that were deleted by the old version cannot be recovered.
+
+### Add the staff booking tools to an existing installation
+
+Import `sql/05_booking_adjustments.sql` once. It only creates the
+`booking_adjustments` change-log table; nothing else is touched, and it is
+safe to run again. Fresh installations already get it from `01_schema.sql`.
 
 ### Remove demo bookings from an existing installation
 
@@ -215,7 +221,7 @@ cinesphere/
 
 ## 5. Database
 
-Twelve tables plus one view.
+Thirteen tables plus one view.
 
 ```
 users ──┬── preferences ──── preference_seats ──┐
@@ -334,3 +340,31 @@ named database, runs real HTTP flows, and removes only that temporary database.
 It does not reset the preview database. Test email subjects start with `[Base test]`.
 See `../tests/base-results.json` for recorded results and `../tests/README.md`
 for scenarios and manual browser checks. Modern enhancements remain separate work.
+
+## Staff booking tools and ticket prices (26 October 2026)
+
+On the Staff page (`admin.php`, still one page, so the page count is unchanged):
+
+- **Manage a booking** - find a booking by reference (or choose *Manage* under
+  Recent bookings), then:
+  - refund selected seats (e.g. bought 3, refund 1): each seat returns its price
+    plus its booking fee and goes straight back on sale;
+  - move a seat to any free seat at the same screening: the customer keeps the
+    price paid, and only a different seat type adds or refunds the surcharge;
+  - cancel and refund the whole booking, with no two-hour cut-off for staff.
+  Every change needs a reason, emails the customer, and is recorded in the
+  `booking_adjustments` change log shown under the booking.
+- **Ticket price** - the Upcoming schedule has a base-price field per screening.
+  Confirmed bookings keep the price already paid; short-list entries for that
+  screening are re-priced so checkout charges the new price.
+
+Logic lives in `includes/booking_admin.php`; the form handlers are new cases in
+`admin_action.php`. Every change locks the screening and the booking in one
+transaction, like checkout and customer cancellation do.
+
+## Rolling schedule
+
+`includes/rolling_schedule.php` keeps the next seven days filled with
+screenings by copying the same weekday from the latest week on record, so the
+schedule never runs out between seed imports. Set `ROLLING_SCHEDULE` to `false`
+in that file to manage the schedule only by hand.

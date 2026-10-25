@@ -6,12 +6,17 @@
  * checked, and the session must belong to an account whose role is
  * 'admin'.
  *
- * SQL used: SELECT, INSERT, UPDATE.
+ * Booking changes (refund seats, cancel, move a seat) and ticket price
+ * changes are implemented in includes/booking_admin.php; the cases below
+ * validate the form, call them, email the customer and report back.
+ *
+ * SQL used: SELECT, INSERT, UPDATE, DELETE.
  * ===================================================================== */
 
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/scheduling.php';
 require_once __DIR__ . '/includes/mailer.php';
+require_once __DIR__ . '/includes/booking_admin.php';
 
 require_post();
 require_admin();
@@ -280,6 +285,147 @@ switch ($action) {
         flash('success', 'Message #CM' . $msg_id . ' from ' . $msg['name']
                        . ' marked ' . $status . '.');
         redirect('admin.php?msgs=' . urlencode($status));
+
+
+    /* ============================================================== */
+    /*  Change a screening's ticket price                             */
+    /* ============================================================== */
+    case 'set_price':
+
+        $showtime_id = (int) ($_POST['showtime_id'] ?? 0);
+        $raw         = trim((string) ($_POST['base_price'] ?? ''));
+        $price       = round((float) $raw, 2);
+
+        /* Same rule as scheduling: S$5.00 to S$60.00 in 50-cent steps. */
+        if (!is_numeric($raw) || $price < 5 || $price > 60
+            || abs($price * 2 - round($price * 2)) > 0.001) {
+            flash('error', 'The base price must be between ' . money(5) . ' and '
+                         . money(60) . ', in steps of ' . money(0.5) . '.');
+            redirect('admin.php#schedule');
+        }
+
+        try {
+            $r = set_showtime_price($showtime_id, $price);
+        } catch (Throwable $ex) {
+            flash('error', $ex instanceof mysqli_sql_exception
+                ? 'The price could not be changed. Nothing was saved.' : $ex->getMessage());
+            redirect('admin.php#schedule');
+        }
+
+        $st = get_showtime($showtime_id);
+        flash('success', 'Base price for ' . $st['title'] . ' on ' . pretty_date($st['show_date'])
+                       . ' at ' . pretty_time($st['show_time']) . ' changed from '
+                       . money($r['old']) . ' to ' . money($r['new'])
+                       . '. Confirmed bookings keep the price already paid'
+                       . ($r['repriced'] ? '; ' . $r['repriced'] . ' short-list '
+                           . ($r['repriced'] === 1 ? 'entry was' : 'entries were') . ' re-priced.' : '.'));
+        redirect('admin.php#schedule');
+
+
+    /* ============================================================== */
+    /*  Refund some seats of a booking, or cancel the whole booking   */
+    /* ============================================================== */
+    case 'refund_seats':
+    case 'cancel_booking':
+
+        $booking_id = (int) ($_POST['booking_id'] ?? 0);
+        $booking    = get_booking($booking_id);
+        if (!$booking) {
+            flash('error', 'That booking was not found.');
+            redirect('admin.php');
+        }
+        $back = 'admin.php?booking=' . urlencode($booking['booking_ref']) . '#manage';
+
+        $errors = [];
+        $reason = v_reason((string) ($_POST['reason'] ?? ''), $errors);
+        $seatIds = $_POST['seat_ids'] ?? [];
+        if (!is_array($seatIds)) {
+            $seatIds = [];
+        }
+        if ($action === 'refund_seats' && !$seatIds) {
+            $errors['seat_ids'] = 'Tick at least one seat to refund.';
+        }
+        if ($errors) {
+            flash('error', reset($errors));
+            redirect($back);
+        }
+
+        $seatsBefore = get_held_seats($booking_id);
+        try {
+            if ($action === 'cancel_booking') {
+                $refund = staff_cancel_booking($booking_id, $reason, current_user_id());
+                $result = ['refund' => $refund, 'seats' => seat_list_text($seatsBefore), 'cancelled' => true];
+            } else {
+                $result = staff_refund_seats($booking_id, $seatIds, $reason, current_user_id());
+            }
+        } catch (Throwable $ex) {
+            flash('error', $ex instanceof mysqli_sql_exception
+                ? 'The booking could not be changed. Nothing was saved.' : $ex->getMessage());
+            redirect($back);
+        }
+
+        $fresh = get_booking($booking_id);
+        if ($result['cancelled']) {
+            $mailed = send_cancellation_notice($fresh, $seatsBefore);
+            flash('success', 'Booking ' . $fresh['booking_ref'] . ' cancelled; '
+                           . $result['seats'] . ' released and ' . money($result['refund']) . ' refunded.');
+        } else {
+            $mailed = send_booking_change_notice($fresh, get_booking_seats($booking_id),
+                          'Refunded seat(s) ' . $result['seats'], -$result['refund']);
+            flash('success', 'Refunded ' . $result['seats'] . ' (' . money($result['refund'])
+                           . ' including booking fees). The seats are back on sale.');
+        }
+        flash($mailed ? 'success' : 'warning', $mailed
+            ? 'The customer was notified in the local coursework inbox.'
+            : 'The change is saved, but the customer email could not be delivered.');
+        redirect($back);
+
+
+    /* ============================================================== */
+    /*  Move one seat of a booking to another free seat               */
+    /* ============================================================== */
+    case 'move_seat':
+
+        $booking_id = (int) ($_POST['booking_id'] ?? 0);
+        $booking    = get_booking($booking_id);
+        if (!$booking) {
+            flash('error', 'That booking was not found.');
+            redirect('admin.php');
+        }
+        $back = 'admin.php?booking=' . urlencode($booking['booking_ref']) . '#manage';
+
+        $errors    = [];
+        $reason    = v_reason((string) ($_POST['reason'] ?? ''), $errors);
+        $from_seat = (int) ($_POST['from_seat'] ?? 0);
+        $to_seat   = (int) ($_POST['to_seat'] ?? 0);
+        if ($from_seat <= 0 || $to_seat <= 0) {
+            $errors['to_seat'] = 'Choose the seat to move and the seat to move it to.';
+        }
+        if ($errors) {
+            flash('error', reset($errors));
+            redirect($back);
+        }
+
+        try {
+            $r = staff_move_seat($booking_id, $from_seat, $to_seat, $reason, current_user_id());
+        } catch (Throwable $ex) {
+            flash('error', $ex instanceof mysqli_sql_exception
+                ? 'That seat could not be assigned; it may have just been sold. Nothing was saved.'
+                : $ex->getMessage());
+            redirect($back);
+        }
+
+        $what = 'Seat ' . $r['from'] . ' moved to ' . $r['to'];
+        $mailed = send_booking_change_notice(get_booking($booking_id), get_booking_seats($booking_id),
+                                             $what, $r['difference']);
+        flash('success', $what . ($r['difference'] > 0
+                ? '. Customer to pay ' . money($r['difference']) . ' more for the seat type.'
+                : ($r['difference'] < 0 ? '. ' . money(-$r['difference']) . ' refunded for the seat type.'
+                                        : '. Same seat type, so the price is unchanged.')));
+        flash($mailed ? 'success' : 'warning', $mailed
+            ? 'The customer was notified in the local coursework inbox.'
+            : 'The change is saved, but the customer email could not be delivered.');
+        redirect($back);
 
 
     /* ============================================================== */

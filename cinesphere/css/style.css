@@ -2198,3 +2198,9 @@ legend {
 }
 
 .booking-layout > * { min-width: 0; }
+
+/* Additional version: catalogue request feedback. */
+.search-feedback { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; min-height: 3rem; margin-bottom: 1rem; }
+.search-feedback p { margin: 0; }
+#search-retry[hidden] { display: none; }
+#movie-results[aria-busy='true'] { opacity: .65; }

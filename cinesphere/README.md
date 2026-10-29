@@ -1,10 +1,12 @@
 # CineSphere — a web portal for booking cinema tickets
 
-IE4727 Web Application Design · **Theme 5** · Base Version
+IE4727 Web Application Design · **Theme 5** · Additional Version
 
 Built with HTML5, CSS3, vanilla JavaScript, PHP 8 and MySQL/MariaDB.
-No framework, no template, no jQuery, no AJAX, no JSON — every page is
-generated on the server and every style is hand-written.
+This checkout adds Fetch/AJAX and JSON catalogue search to the base application.
+See [the modern version notes](../MODERN-VERSION.md). The base checklist below
+documents the original version on `base-version-before-live-search`; its no-AJAX/JSON restriction does not
+describe this additional branch. Other booking features remain server-rendered.
 
 ---
 

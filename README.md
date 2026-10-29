@@ -1,6 +1,10 @@
 # CineSphere: a web portal for booking cinema tickets
 
-IE4727 Web Application Design · Theme 5 (cinema ticket booking) · Base Version
+IE4727 Web Application Design · Theme 5 (cinema ticket booking) · Additional Version
+
+This branch adds live catalogue search using Fetch and JSON. See
+[MODERN-VERSION.md](MODERN-VERSION.md) for implementation, demo and test details.
+The base version is preserved on `base-version-before-live-search` at `f0e56f7`. Main now includes the combined wording update and live search.
 
 CineSphere is a ticket booking site for a fictional Singapore cinema chain with
 three venues: Orchard, Jewel Changi and HarbourFront. Customers browse films and
@@ -10,8 +14,9 @@ single checkout. Each confirmed booking produces an e-ticket and an email
 acknowledgement. Staff schedule screenings, set ticket prices, manage customer
 bookings and answer feedback.
 
-Built by hand with **HTML5, CSS3, JavaScript, PHP 8 and MySQL**: no framework,
-template, jQuery, AJAX or JSON, as the Base Version rules require.
+Built by hand with **HTML5, CSS3, JavaScript, PHP 8 and MySQL**. The additional
+version uses Fetch/AJAX and JSON for catalogue search, with no framework,
+template or jQuery. Keep this branch separate from the Base Version submission.
 
 ---
 
@@ -132,7 +137,7 @@ Latest run: **51/51 and 6/6 passed** (28 Oct 2026).
 
 - **Real payment.** It is simulated, as the project brief allows; refunds are
   recorded, not sent to a payment provider.
-- **The Additional Version (15%)**, i.e. modern enhancements such as a
-  component framework or live seat updates.
+- **Live seat updates and a component framework.** This additional version
+  implements live catalogue search only; see `MODERN-VERSION.md`.
 
 See `CHANGELOG.md` for the history of the work.

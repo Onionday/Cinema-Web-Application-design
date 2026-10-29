@@ -1,5 +1,15 @@
 # Changes to the CineSphere base version
 
+## 29 October 2026 — additional version only
+
+Branch `modern-live-search` adds debounced catalogue search and immediate filter
+updates without page reloads. Shared PHP query and escaped result templates serve
+both the JSON endpoint and ordinary form fallback. Includes loading/empty/error
+feedback, retry, timeout, stale-response protection, URL history and reset.
+Nine browser/API scenarios passed in headless Edge; desktop and mobile screenshots
+were visually reviewed. No database migration. The base checkout remains unchanged.
+See `MODERN-VERSION.md` and `tests/search-test-results.md`.
+
 ## 28 October 2026
 
 Fixed three checkout/refund issues found while reviewing main `bcc1e9a`:

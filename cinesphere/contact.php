@@ -178,11 +178,7 @@ require __DIR__ . '/includes/header.php';
 
     <!-- ========================= VENUES ========================= -->
     <div>
-      <img src="images/venue.svg" alt="Illustration of a CineSphere frontage"
-           width="760" height="440"
-           style="border-radius:var(--radius);border:1px solid var(--line);margin-bottom:1.5rem;">
-
-      <h2 style="font-size:1.2rem;">Our venues</h2>
+      <h2 style="font-size:1.2rem;margin-top:0;">Our venues</h2>
 
       <?php foreach ($cinemas as $c): ?>
         <div class="card" style="margin-bottom:1rem;">

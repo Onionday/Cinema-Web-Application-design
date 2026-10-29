@@ -20,7 +20,7 @@ $featured = db_one(
 
 /* -- Everything on release, with a count of upcoming screenings ------ */
 $nowShowing = db_all(
-    "SELECT m.*,
+    "SELECT m.*, /*take every column from the movies table*/
             (SELECT COUNT(*)
                FROM showtimes st
               WHERE st.movie_id = m.movie_id
@@ -93,6 +93,7 @@ require __DIR__ . '/includes/header.php';
       </div>
     </div>
 
+    <!-- Showing featured films of the week -->
     <?php if ($featured): ?>
     <div class="hero-feature">
       <a class="hero-poster" href="movie.php?id=<?= (int) $featured['movie_id'] ?>">
@@ -213,14 +214,14 @@ require __DIR__ . '/includes/header.php';
         <span class="eyebrow">Starting soon</span>
         <h2>Next screenings</h2>
       </div>
-      <p><a href="showtimes.php">Everything this week &rarr;</a></p>
+      <p><a href="showtimes.php">Show this week &rarr;</a></p>
     </div>
 
     <div class="table-wrap">
       <table class="data">
         <caption>
-          The six screenings closest to starting
-          <span class="muted">Availability is recalculated from the bookings table each time this page loads.</span>
+          Six Screenings starting today
+          <span class="muted">Availability is subject to time slot of each showing</span>
         </caption>
         <thead>
           <tr>
@@ -272,7 +273,7 @@ require __DIR__ . '/includes/header.php';
 <?php endif; ?>
 
 
-<!-- ======================== HOW IT WORKS ========================== -->
+<!-- How booking works here -->
 <section class="section">
   <div class="container">
     <div class="section-head">

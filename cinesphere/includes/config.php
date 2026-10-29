@@ -16,7 +16,7 @@ define('DB_PORT', 3306);
 
 /* ---------- Site identity ----------------------------------------- */
 define('SITE_NAME',    'CineSphere');
-define('SITE_TAGLINE', 'Book the seat you actually want.');
+define('SITE_TAGLINE', 'Best cinema in town.');
 define('SITE_EMAIL',   'bookings@cinesphere.local');
 
 /* ---------- Business rules ---------------------------------------- */

@@ -124,7 +124,7 @@ function send_contact_ack(string $name, string $to, string $subject_line, int $r
 /**
  * Tells the customer that staff changed their booking: some seats
  * refunded, or a seat moved. $amount < 0 is money returned to them,
- * $amount > 0 is extra to pay at the box office.
+ * $amount > 0 is an approved simulated supplementary payment.
  */
 function send_booking_change_notice(array $booking, array $seats, string $what, float $amount): bool
 {
@@ -132,7 +132,7 @@ function send_booking_change_notice(array $booking, array $seats, string $what, 
     if ($amount < 0) {
         $money = "  Refund : " . money(-$amount) . " to the original payment method\n";
     } elseif ($amount > 0) {
-        $money = "  To pay : " . money($amount) . " at the box office before the film\n";
+        $money = "  Paid   : " . money($amount) . " (additional simulated payment approved)\n";
     } else {
         $money = "  Price  : no change\n";
     }

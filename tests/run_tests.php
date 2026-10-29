@@ -152,6 +152,7 @@ final class Browser
     private array $cookies = [];
     public string $url = '';
     public int $status = 0;
+    public ?string $checkoutQuote = null;
 
     public function __construct(private string $base) {}
 
@@ -163,6 +164,10 @@ final class Browser
     /** POSTs a form. Adds this session's CSRF token unless $withToken is false. */
     public function post(string $path, array $fields, bool $withToken = true): string
     {
+        if ($path === 'process_booking.php' && !array_key_exists('quote', $fields)) {
+            if ($this->checkoutQuote === null) { $this->get('preferences.php'); }
+            $fields['quote'] = $this->checkoutQuote ?? '';
+        }
         if ($withToken && !isset($fields['csrf'])) {
             $fields['csrf'] = $this->token();
         }
@@ -174,6 +179,14 @@ final class Browser
         $html = $this->get('contact.php');
         preg_match('/name="csrf" value="([^"]+)"/', $html, $m);
         return $m[1] ?? '';
+    }
+
+    /** Capture an authenticated form submission for a separate HTTP worker. */
+    public function workerRequest(string $path, array $fields): array
+    {
+        $fields['csrf'] = $this->token();
+        return ['url'=>$this->base.$path, 'body'=>http_build_query($fields),
+                'cookie'=>implode('; ', array_map(fn($k,$v)=>"$k=$v", array_keys($this->cookies), $this->cookies))];
     }
 
     private function send(string $method, string $url, ?string $body, int $hops = 0): string
@@ -204,6 +217,7 @@ final class Browser
             }
         }
         $this->url = $url;
+        if (preg_match('/name="quote" value="([^"]+)"/', $html, $q)) { $this->checkoutQuote = $q[1]; }
         if ($location !== null && $hops < 6) {
             $next = preg_match('#^https?://#', $location) ? $location
                   : preg_replace('#[^/]*$#', '', strtok($url, '?#')) . $location;
@@ -805,7 +819,7 @@ tc('TC36', 'F10', 'Staff move a seat to a different seat type',
        $before = (float) one('SELECT total_amount FROM bookings WHERE booking_id = ?', [$bk['booking_id']])['total_amount'];
        $a = new Browser($GLOBALS['BASE']); $a->login('admin@cinesphere.sg', 'Admin@123');
        $a->post('admin_action.php', ['action' => 'move_seat', 'booking_id' => $bk['booking_id'],
-                'from_seat' => $seats[0], 'to_seat' => $to['seat_id'], 'reason' => 'Asked for a better view']);
+                'from_seat' => $seats[0], 'to_seat' => $to['seat_id'], 'reason' => 'Asked for a better view', 'upgrade_payment' => 'success']);
        $after = (float) one('SELECT total_amount FROM bookings WHERE booking_id = ?', [$bk['booking_id']])['total_amount'];
        $diff = round((float) $to['surcharge'] - (float) $from['surcharge'], 2);
        $onTicket = one('SELECT 1 x FROM booking_seat_history WHERE booking_id = ? AND seat_id = ?', [$bk['booking_id'], $to['seat_id']]);
@@ -900,6 +914,15 @@ tc('TC42', 'F2', 'Topping up never duplicates screenings',
 /* =====================================================================
  *  5. Run, report, write tests/test-results.md
  * ===================================================================== */
+require __DIR__ . '/financial_cases.php';
+
+/* Reuse the disposable database/server for browser checks without touching the
+   preview database. Requires Node.js, Playwright and its Chromium installation. */
+if (in_array('--browser-only', $argv, true)) {
+    passthru('node ' . escapeshellarg(__DIR__ . '/ui_tests.js') . ' ' . escapeshellarg($BASE), $browserExit);
+    exit($browserExit);
+}
+
 $started = microtime(true);
 $results = [];
 $pass = 0;

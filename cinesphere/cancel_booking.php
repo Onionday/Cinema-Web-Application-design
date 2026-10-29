@@ -45,20 +45,23 @@ if ($startsAt - time() <= 2 * 3600) {
     redirect('mybookings.php');
 }
 
-/* Capture the seats before they are released, for the email. */
-$seats = get_booking_seats($booking_id);
-
 /* ---- Cancel, as one transaction ----------------------------------- */
 $conn = db();
 $conn->begin_transaction();
 
 try {
     db_one('SELECT showtime_id FROM showtimes WHERE showtime_id = ? FOR UPDATE', [(int) $booking['showtime_id']]);
-    $fresh = db_one('SELECT booking_status FROM bookings WHERE booking_id = ? FOR UPDATE', [$booking_id]);
+    $fresh = db_one('SELECT * FROM bookings WHERE booking_id = ? FOR UPDATE', [$booking_id]);
     if (!$fresh || $fresh['booking_status'] !== 'confirmed') {
         $conn->rollback();
         flash('info', 'This booking has already been cancelled.');
         redirect('mybookings.php?show=other');
+    }
+    $booking = array_replace($booking, $fresh);
+    $seats = get_held_seats($booking_id, true);
+    /* The request may have waited on a staff adjustment; check the cutoff again. */
+    if (strtotime($booking['show_date'] . ' ' . $booking['show_time']) - time() <= 2 * 3600) {
+        throw new RuntimeException('The online cancellation window has closed.');
     }
     archive_booking_seats($booking_id);
 

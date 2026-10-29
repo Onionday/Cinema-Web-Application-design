@@ -7,8 +7,9 @@ PASS/FAIL and write a results table in the report's test case format:
 
 | File | What it is |
 |---|---|
-| `run_tests.php` | 42 server-side test cases (TC01 to TC42). Pages, forms, database, email, security |
+| `run_tests.php` | 51 server-side test cases (TC01 to TC51). Pages, forms, database, email, security |
 | `ui_tests.js` | 6 browser test cases (UI01 to UI06). JavaScript validation, seat picker, phone layout |
+| `financial_cases.php`, `financial_worker.php` | Nine financial regression cases, including concurrent PHP workers; loaded by the server suite |
 | `mail_sink.php` | Helper for `run_tests.php`: catches the site's emails so nothing is sent |
 | `test-results.md` | Latest results of `run_tests.php`, ready to paste into the report |
 | `ui-test-results.md` | Latest results of `ui_tests.js` |
@@ -33,7 +34,7 @@ It is safe to run at any time. Every run:
   is never read or changed;
 - starts PHP's built-in web server on a free port, pointed at that database;
 - catches every email in a temporary file, so nothing is delivered anywhere;
-- takes about 5 seconds.
+- takes about 20 seconds.
 
 If your MySQL root account has a password, set it first:
 `set TEST_DB_PASS=yourpassword` (also `TEST_DB_USER`, `TEST_DB_HOST`, `TEST_DB_PORT`).
@@ -91,7 +92,7 @@ customer but does not book anything.
 **A bug these tests found.** TC13 showed that a form posted with no CSRF token was
 accepted when the visitor's session had no token yet, because the check compared
 an empty string with an empty string. `csrf_check()` in `includes/functions.php`
-now rejects empty tokens. With the old code, TC13 fails; with the fix, all 42 pass.
+now rejects empty tokens. With the old code, TC13 fails; with the fix, TC13 passes. The current suite also includes the nine cases below.
 
 ## 4. Earlier regression checks (10 October)
 
@@ -100,3 +101,33 @@ now rejects empty tokens. With the old code, TC13 fails; with the fix, all 42 pa
 recorded results are in `base-results.json`, and the manual browser checks from that
 round are in `ui-results.json`. The two suites above replace it for day-to-day use
 because they only need XAMPP.
+
+## 5. Checkout and refund regressions (28 October)
+
+TC43-TC51 cover changed prices and reconfirmation, missing/declined upgrade
+payments, settled upgrades followed by cancellation, concurrent partial refunds
+against staff and customer cancellations, forged/missing quotes, exact refund-all
+selection, downgrades, and a price change while checkout waits on its lock.
+
+The concurrency cases use separate PHP processes against the disposable database.
+A temporary trigger and MySQL named lock pause the real partial-refund function,
+then release it once cancellation is waiting. This requires CREATE TRIGGER and
+process visibility for the test database (the default local root account supplies
+these). The in-flight pricing case applies equivalent SQL inside a controlled
+transaction; TC40 and TC43 cover the real price-edit endpoint.
+
+The six browser cases can now use that same isolated setup:
+
+```text
+php tests/run_tests.php --browser-only
+```
+
+Install Playwright and Chromium as described above. To use an installed Edge
+browser instead, set `PLAYWRIGHT_CHANNEL=msedge` in the process environment
+(PowerShell: `$env:PLAYWRIGHT_CHANNEL='msedge'`). No personal browser profile is
+used. This mode preserves the latest server test report and updates only the
+browser report. The 28 October browser run passed all six cases using Edge.
+
+The initial six new regression cases failed against unmodified main; after the
+fixes and additional concurrency/negative-path coverage, all 51 server cases
+passed. These are focused regression checks, not exhaustive concurrency proof.

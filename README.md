@@ -115,8 +115,8 @@ cd C:\xampp\htdocs\Cinema-Web-Application-design
 C:\xampp\php\php.exe tests\run_tests.php
 ```
 
-- **42 server-side test cases.** They cover every feature, security and data
-  integrity. They run in about 5 seconds against a temporary database that is
+- **51 server-side test cases.** They cover every feature, security and data
+  integrity. They run in about 20 seconds against a temporary database that is
   deleted afterwards, so your real data is never touched. Results are written
   to `tests/test-results.md` as a table in the report's format (input data,
   expected output, test method, test result).
@@ -124,7 +124,7 @@ C:\xampp\php\php.exe tests\run_tests.php
   for the JavaScript validation, seat picker and phone layout. Without Node.js,
   the same checks can be done by hand from `tests/README.md`.
 
-Latest run: **42/42 and 6/6 passed** (26 Oct 2026).
+Latest run: **51/51 and 6/6 passed** (28 Oct 2026).
 
 ---
 

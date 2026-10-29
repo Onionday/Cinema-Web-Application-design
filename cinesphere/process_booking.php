@@ -16,6 +16,7 @@
 
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/mailer.php';
+require_once __DIR__ . '/includes/checkout.php';
 
 require_post();
 require_login();
@@ -45,6 +46,12 @@ if (!$agreed) {
 
 if (!in_array($gateway, ['success', 'declined'], true)) {
     $gateway = 'success';
+}
+
+$quote = take_checkout_quote($_POST['quote'] ?? null);
+if ($quote === null) {
+    flash('warning', 'Your checkout quote expired or is missing. Review the current prices and confirm again.');
+    redirect('preferences.php');
 }
 
 /* ---- Re-read every ticked entry, in the customer's own ranking ----- */
@@ -84,6 +91,14 @@ foreach ($ordered as $pid) {
         $toBook[] = $p;
     } else {
         $rejected[] = $p;
+    }
+}
+
+/* Reject a changed quote before processing any selected booking. */
+foreach ($toBook as $p) {
+    if (!checkout_quote_matches($quote, $p)) {
+        flash('warning', 'A price or seat selection has changed. Nothing was booked. Review the current prices and confirm again.');
+        redirect('preferences.php');
     }
 }
 
@@ -140,6 +155,7 @@ if ($gateway === 'declined') {
 $conn      = db();
 $confirmed = [];
 $lost      = [];
+$priceChanged = false;
 
 foreach ($toBook as $p) {
 
@@ -151,9 +167,14 @@ foreach ($toBook as $p) {
         if (!$live || $live['status'] !== 'open' || showtime_has_passed($live)) {
             throw new RuntimeException('This screening is no longer available.');
         }
-        $choice = db_one('SELECT pref_id FROM preferences WHERE pref_id = ? AND user_id = ? FOR UPDATE',
-                         [(int) $p['pref_id'], $user_id]);
+        $choice = locked_checkout_choice((int)$p['pref_id'], $user_id);
         if (!$choice) { throw new RuntimeException('This choice has already been processed.'); }
+        if (!checkout_quote_matches($quote, $choice)) {
+            $priceChanged = true;
+            throw new RuntimeException('The price changed during checkout. Review it and confirm again.');
+        }
+        /* Use the locked seats and amount, not the pretransaction snapshot. */
+        $p = array_replace($p, $choice);
 
         /* Last-moment re-check inside the transaction. */
         $taken = get_taken_seat_ids((int) $p['showtime_id']);
@@ -236,6 +257,11 @@ foreach ($confirmed as $bid) {
 }
 
 /* ---- Report back --------------------------------------------------- */
+if ($priceChanged) {
+    flash('warning', 'A price changed during checkout. Those selections were not booked or charged. Review the current prices and confirm them again.');
+}
+if (!$confirmed && $priceChanged) { redirect('preferences.php'); }
+
 if (!$confirmed) {
     flash('error', 'Payment was approved but every seat had just been sold. '
                  . 'Nothing has been charged. Please choose different seats.');

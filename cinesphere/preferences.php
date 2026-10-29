@@ -13,11 +13,13 @@
  * ===================================================================== */
 
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/checkout.php';
 
 require_login('Sign in to see the screenings you have short-listed.');
 
 $user_id = current_user_id();
 $prefs   = get_preferences($user_id);
+$quote   = create_checkout_quote($prefs);
 
 $availableCount = 0;
 $availableTotal = 0.0;
@@ -108,6 +110,7 @@ require __DIR__ . '/includes/booking_progress.php';
   <form id="confirm-form" method="post" action="process_booking.php"
         data-currency="<?= e(CURRENCY) ?>">
     <?= csrf_field() ?>
+    <input type="hidden" name="quote" value="<?= e($quote) ?>">
 
     <?php foreach ($prefs as $i => $p):
         $ok     = (bool) $p['available'];

@@ -64,7 +64,8 @@ class Client:
         self.post('process_preference.php', {'showtime_id':showtime, ('seats[]' if native else 'seat_ids'): [seat] if native else str(seat)})
     def confirm(self, pref, gateway='success'):
         self.get('preferences.php')
-        return self.post('process_booking.php', {'confirm[]':pref,'agree':'1','gateway':gateway})
+        quote = re.search(r'name="quote" value="([^"]+)"', self.html).group(1)
+        return self.post('process_booking.php', {'confirm[]':pref,'agree':'1','gateway':gateway,'quote':quote})
 
 def start(port, smtp_port=None):
     env = dict(os.environ, CINESPHERE_DB_NAME=DB)

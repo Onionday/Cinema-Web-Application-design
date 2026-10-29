@@ -14,6 +14,7 @@
  * ===================================================================== */
 
 const { chromium } = require('playwright');
+const channel = process.env.PLAYWRIGHT_CHANNEL;
 
 const BASE = (process.argv[2] || 'http://localhost/Cinema-Web-Application-design/cinesphere/')
     .replace(/\/?$/, '/');
@@ -122,7 +123,7 @@ tc('UI06', 'F9, R9', 'Contact: a message under 20 characters is caught before se
 });
 
 (async () => {
-    const browser = await chromium.launch();
+    const browser = await chromium.launch(channel ? { channel } : {});
     const page = await browser.newPage();
     let pass = 0;
     const results = [];
@@ -144,7 +145,7 @@ tc('UI06', 'F9, R9', 'Contact: a message under 20 characters is caught before se
         + '| ID | Req. | Test case | Input data | Expected output | Test method | Test result |\n'
         + '| --- | --- | --- | --- | --- | --- | --- |\n';
     for (const r of results) {
-        md += '| ' + [r.id, r.req, r.title, r.input, r.expected, 'Automated browser (Playwright, Chromium)',
+        md += '| ' + [r.id, r.req, r.title, r.input, r.expected, `Automated browser (Playwright, ${channel || 'Chromium'})`,
                       (r.ok ? 'PASS - ' : 'FAIL - ') + r.actual].map(cell).join(' | ') + ' |\n';
     }
     require('fs').writeFileSync(require('path').join(__dirname, 'ui-test-results.md'), md);

@@ -1,5 +1,35 @@
 # Changes to the CineSphere base version
 
+## 28 October 2026
+
+Fixed three checkout/refund issues found while reviewing main `bcc1e9a`:
+
+- Checkout now remembers the seats and prices displayed using a session-backed,
+  single-use quote. Quotes last 15 minutes and support multiple tabs. Missing,
+  expired or changed quotes require the customer to review and confirm again.
+  Checkout re-reads the choice and prices after acquiring locks; shortlist
+  creation also prices under the screening lock.
+- Moving to a more expensive seat requires an approved simulated supplementary
+  payment. Missing or declined approval changes nothing. Same-price moves need
+  no extra payment; cheaper seats refund the difference. The adjustment log and
+  email record approved payment, instead of promising collection later.
+- Staff and customer cancellations read current monetary state and held seats
+  after acquiring locks. Staff notifications use the exact operation snapshot.
+  Refunding all seats validates the complete selection inside the same transaction.
+
+No database schema change is required. This does not invent settlement records
+for unpaid seat upgrades made before this fix; those older adjustments need to
+be checked against any actual box-office settlement records before refunding.
+
+Validation: 51/51 server tests and 6/6 browser tests passed. Nine new cases cover
+stale/forged quotes, in-flight repricing, upgrade approval/decline, downgrade and
+refund-all, and concurrent partial refunds against staff/customer cancellation.
+The refund races use real PHP functions in separate processes and a database
+lock barrier. The in-flight price test controls the timing with equivalent SQL
+repricing writes; normal staff repricing is covered through HTTP elsewhere.
+PHP/JavaScript syntax checks also passed. Tests use disposable databases and a
+local mail catcher. See `tests/README.md` for commands and result files.
+
 ## 26 October 2026
 
 New staff features, a self-maintaining schedule, an automated test suite, and

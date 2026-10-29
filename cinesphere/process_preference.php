@@ -136,21 +136,24 @@ if ($dupes) {
     redirect('preferences.php');
 }
 
-/* ---- Price it here, on the server --------------------------------- */
-$prices   = [];
-$subtotal = 0.0;
-foreach ($validSeats as $s) {
-    $p = seat_price($showtime, $s);
-    $prices[(int) $s['seat_id']] = $p;
-    $subtotal += $p;
-}
-$estTotal = round($subtotal + BOOKING_FEE * count($validSeats), 2);
-
 /* ---- Write it, as one transaction --------------------------------- */
 $conn = db();
 $conn->begin_transaction();
 
 try {
+    /* Serialize pricing with staff price changes. */
+    $live = db_one('SELECT * FROM showtimes WHERE showtime_id = ? FOR UPDATE', [$showtime_id]);
+    if (!$live || $live['status'] !== 'open' || showtime_has_passed($live)) {
+        throw new RuntimeException('This screening is no longer available.');
+    }
+    $showtime = array_replace($showtime, $live);
+    $prices = [];
+    $subtotal = 0.0;
+    foreach ($validSeats as $s) {
+        $prices[(int)$s['seat_id']] = seat_price($showtime, $s);
+        $subtotal += $prices[(int)$s['seat_id']];
+    }
+    $estTotal = round($subtotal + BOOKING_FEE * count($validSeats), 2);
     $nextRank = 1 + (int) (db_one(
         'SELECT COALESCE(MAX(rank_order), 0) AS r FROM preferences WHERE user_id = ?',
         [$user_id]

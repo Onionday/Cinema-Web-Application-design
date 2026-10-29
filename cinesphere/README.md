@@ -368,3 +368,16 @@ transaction, like checkout and customer cancellation do.
 screenings by copying the same weekday from the latest week on record, so the
 schedule never runs out between seed imports. Set `ROLLING_SCHEDULE` to `false`
 in that file to manage the schedule only by hand.
+
+
+## Checkout and refund corrections (28 October 2026)
+
+Checkout uses server-side, single-use quotes (`includes/checkout.php`) to bind
+confirmation to the displayed seats and prices. Any changed price requires
+reconfirmation, including a price change while the request waits for a lock.
+Staff upgrades require explicit simulated supplementary-payment approval; no
+unpaid upgrade is marked as paid. Refunds and their notifications use the current
+locked booking and seat data. These changes need no schema migration.
+
+The server suite now has 51 cases, including concurrent refund/cancellation and
+in-flight repricing checks. See `../tests/README.md` and `../CHANGELOG.md`.

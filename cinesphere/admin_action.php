@@ -350,11 +350,10 @@ switch ($action) {
             redirect($back);
         }
 
-        $seatsBefore = get_held_seats($booking_id);
         try {
             if ($action === 'cancel_booking') {
-                $refund = staff_cancel_booking($booking_id, $reason, current_user_id());
-                $result = ['refund' => $refund, 'seats' => seat_list_text($seatsBefore), 'cancelled' => true];
+                $result = null;
+                staff_cancel_booking($booking_id, $reason, current_user_id(), $result);
             } else {
                 $result = staff_refund_seats($booking_id, $seatIds, $reason, current_user_id());
             }
@@ -364,13 +363,13 @@ switch ($action) {
             redirect($back);
         }
 
-        $fresh = get_booking($booking_id);
+        $fresh = $result['booking'];
         if ($result['cancelled']) {
-            $mailed = send_cancellation_notice($fresh, $seatsBefore);
+            $mailed = send_cancellation_notice($fresh, $result['seat_rows']);
             flash('success', 'Booking ' . $fresh['booking_ref'] . ' cancelled; '
                            . $result['seats'] . ' released and ' . money($result['refund']) . ' refunded.');
         } else {
-            $mailed = send_booking_change_notice($fresh, get_booking_seats($booking_id),
+            $mailed = send_booking_change_notice($fresh, $result['seat_rows'],
                           'Refunded seat(s) ' . $result['seats'], -$result['refund']);
             flash('success', 'Refunded ' . $result['seats'] . ' (' . money($result['refund'])
                            . ' including booking fees). The seats are back on sale.');
@@ -407,7 +406,8 @@ switch ($action) {
         }
 
         try {
-            $r = staff_move_seat($booking_id, $from_seat, $to_seat, $reason, current_user_id());
+            $r = staff_move_seat($booking_id, $from_seat, $to_seat, $reason, current_user_id(),
+                                 is_string($_POST['upgrade_payment'] ?? null) ? $_POST['upgrade_payment'] : '');
         } catch (Throwable $ex) {
             flash('error', $ex instanceof mysqli_sql_exception
                 ? 'That seat could not be assigned; it may have just been sold. Nothing was saved.'
@@ -416,10 +416,10 @@ switch ($action) {
         }
 
         $what = 'Seat ' . $r['from'] . ' moved to ' . $r['to'];
-        $mailed = send_booking_change_notice(get_booking($booking_id), get_booking_seats($booking_id),
+        $mailed = send_booking_change_notice($r['booking'], $r['seat_rows'],
                                              $what, $r['difference']);
         flash('success', $what . ($r['difference'] > 0
-                ? '. Customer to pay ' . money($r['difference']) . ' more for the seat type.'
+                ? '. Additional simulated payment of ' . money($r['difference']) . ' approved.'
                 : ($r['difference'] < 0 ? '. ' . money(-$r['difference']) . ' refunded for the seat type.'
                                         : '. Same seat type, so the price is unchanged.')));
         flash($mailed ? 'success' : 'warning', $mailed

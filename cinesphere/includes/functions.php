@@ -447,6 +447,21 @@ function get_booking(int $booking_id): ?array
     );
 }
 
+/** Seats a booking holds right now, with each seat's type surcharge. */
+function get_held_seats(int $booking_id, bool $lock = false): array
+{
+    return db_all(
+        'SELECT bs.seat_id, bs.seat_price, s.seat_row, s.seat_number,
+                s.seat_type, s.surcharge
+           FROM booking_seats bs
+           JOIN seats s ON s.seat_id = bs.seat_id
+          WHERE bs.booking_id = ?
+          ORDER BY s.seat_row, s.seat_number' . ($lock ? ' FOR UPDATE' : ''),
+        [$booking_id]
+    );
+}
+
+
 /** The seats attached to one booking. */
 function archive_booking_seats(int $booking_id): void
 {

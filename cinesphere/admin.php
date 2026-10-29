@@ -267,6 +267,16 @@ require __DIR__ . '/includes/header.php';
                 <span class="error"></span>
               </div>
               <div class="field">
+                <label for="mv-payment">Additional payment for an upgrade (simulated)</label>
+                <select name="upgrade_payment" id="mv-payment">
+                  <option value="">No additional payment approved</option>
+                  <option value="success">Additional payment approved</option>
+                  <option value="declined">Additional payment declined</option>
+                </select>
+                <p class="small muted">A more expensive seat moves only after approval.
+                  Same-price moves and cheaper seats need no additional payment.</p>
+              </div>
+              <div class="field">
                 <label for="mv-reason">Reason <span class="req">*</span></label>
                 <input type="text" name="reason" id="mv-reason" required minlength="5" maxlength="160"
                        placeholder="e.g. Wheelchair access requested"

@@ -36,20 +36,6 @@ function find_booking_by_ref(string $ref): ?array
     return $row ? get_booking((int) $row['booking_id']) : null;
 }
 
-/** Seats a booking holds right now, with each seat's type surcharge. */
-function get_held_seats(int $booking_id, bool $lock = false): array
-{
-    return db_all(
-        'SELECT bs.seat_id, bs.seat_price, s.seat_row, s.seat_number,
-                s.seat_type, s.surcharge
-           FROM booking_seats bs
-           JOIN seats s ON s.seat_id = bs.seat_id
-          WHERE bs.booking_id = ?
-          ORDER BY s.seat_row, s.seat_number' . ($lock ? ' FOR UPDATE' : ''),
-        [$booking_id]
-    );
-}
-
 /** Free seats in the hall for this screening, for the "move to" list. */
 function get_free_seats(int $showtime_id, int $hall_id): array
 {
@@ -113,15 +99,17 @@ function lock_changeable_booking(int $booking_id): array
     }
 
     /* Same lock order as checkout and cancellation: screening, then booking. */
-    db_one('SELECT showtime_id FROM showtimes WHERE showtime_id = ? FOR UPDATE',
-           [(int) $booking['showtime_id']]);
-    $fresh = db_one('SELECT booking_status FROM bookings WHERE booking_id = ? FOR UPDATE',
+    $screening = db_one('SELECT showtime_id, show_date, show_time FROM showtimes WHERE showtime_id = ? FOR UPDATE',
+                        [(int) $booking['showtime_id']]);
+    $fresh = db_one('SELECT * FROM bookings WHERE booking_id = ? FOR UPDATE',
                     [$booking_id]);
 
     if (!$fresh || $fresh['booking_status'] !== 'confirmed') {
         throw new RuntimeException('Only confirmed bookings can be changed. This one is '
                                  . ($fresh['booking_status'] ?? 'missing') . '.');
     }
+    /* Locking reads see committed changes even under REPEATABLE READ. */
+    $booking = array_replace($booking, $fresh, $screening);
     if (showtime_has_passed($booking)) {
         throw new RuntimeException('This screening has already started, so the booking can no longer be changed.');
     }
@@ -145,34 +133,34 @@ function log_adjustment(int $booking_id, int $staff_id, string $action,
 /*  Booking changes                                                    */
 /* ------------------------------------------------------------------ */
 
-/**
- * Cancels the whole booking: refund in full, seats back on sale.
- * Returns the refunded amount.
- */
-function staff_cancel_booking(int $booking_id, string $reason, int $staff_id): float
+/** Caller already holds screening/booking/seat locks in a transaction. */
+function cancel_locked_booking(array $booking, array $seats, string $reason, int $staff_id): array
+{
+    $booking_id = (int)$booking['booking_id'];
+    archive_booking_seats($booking_id);
+    db_execute("UPDATE bookings SET booking_status = 'cancelled', payment_status = 'refunded'
+                 WHERE booking_id = ?", [$booking_id]);
+    db_execute('DELETE FROM booking_seats WHERE booking_id = ?', [$booking_id]);
+    $refund = (float)$booking['total_amount'];
+    log_adjustment($booking_id, $staff_id, 'booking_cancel',
+                   'Cancelled by staff; released ' . seat_list_text($seats), -$refund, $reason);
+    $booking['booking_status'] = 'cancelled';
+    $booking['payment_status'] = 'refunded';
+    return ['refund'=>$refund, 'seats'=>seat_list_text($seats), 'cancelled'=>true,
+            'booking'=>$booking, 'seat_rows'=>$seats];
+}
+
+/** Cancel using the current locked amount; retain the exact notification snapshot. */
+function staff_cancel_booking(int $booking_id, string $reason, int $staff_id, ?array &$notice = null): float
 {
     $conn = db();
     $conn->begin_transaction();
     try {
         $booking = lock_changeable_booking($booking_id);
-        $seats   = get_held_seats($booking_id, true);
-
-        archive_booking_seats($booking_id);   // seat labels survive the release
-
-        /* UPDATE - kept as a record, marked cancelled and refunded */
-        db_execute("UPDATE bookings
-                       SET booking_status = 'cancelled', payment_status = 'refunded'
-                     WHERE booking_id = ?", [$booking_id]);
-
-        /* DELETE - the seats go back on sale */
-        db_execute('DELETE FROM booking_seats WHERE booking_id = ?', [$booking_id]);
-
-        $refund = (float) $booking['total_amount'];
-        log_adjustment($booking_id, $staff_id, 'booking_cancel',
-                       'Cancelled by staff; released ' . seat_list_text($seats),
-                       -$refund, $reason);
+        $result = cancel_locked_booking($booking, get_held_seats($booking_id, true), $reason, $staff_id);
         $conn->commit();
-        return $refund;
+        $notice = $result;
+        return $result['refund'];
     } catch (Throwable $ex) {
         $conn->rollback();
         throw $ex;
@@ -181,7 +169,7 @@ function staff_cancel_booking(int $booking_id, string $reason, int $staff_id): f
 
 /**
  * Refunds some of a booking's seats. Refunding every seat is the same
- * as cancelling the booking, so it is handed to staff_cancel_booking().
+ * as cancelling the booking, using the same already-locked transaction.
  *
  * @return array{refund: float, seats: string, cancelled: bool}
  */
@@ -192,17 +180,10 @@ function staff_refund_seats(int $booking_id, array $seat_ids, string $reason, in
         throw new RuntimeException('Tick at least one seat to refund.');
     }
 
-    $held = get_held_seats($booking_id);
-    if ($held && count(array_intersect($seat_ids, array_map(
-            static fn($s) => (int) $s['seat_id'], $held))) === count($held)) {
-        $refund = staff_cancel_booking($booking_id, $reason, $staff_id);
-        return ['refund' => $refund, 'seats' => seat_list_text($held), 'cancelled' => true];
-    }
-
     $conn = db();
     $conn->begin_transaction();
     try {
-        lock_changeable_booking($booking_id);
+        $booking = lock_changeable_booking($booking_id);
 
         $held   = get_held_seats($booking_id, true);
         $byId   = [];
@@ -216,8 +197,11 @@ function staff_refund_seats(int $booking_id, array $seat_ids, string $reason, in
             }
             $chosen[] = $byId[$id];
         }
-        if (count($chosen) >= count($held)) {
-            throw new RuntimeException('To refund every seat, cancel the whole booking instead.');
+        /* Validate the exact set under the locks before deciding to cancel all. */
+        if (count($chosen) === count($held)) {
+            $result = cancel_locked_booking($booking, $held, $reason, $staff_id);
+            $conn->commit();
+            return $result;
         }
 
         /* Each refunded seat returns its own price plus its booking fee. */
@@ -247,8 +231,12 @@ function staff_refund_seats(int $booking_id, array $seat_ids, string $reason, in
         log_adjustment($booking_id, $staff_id, 'seat_refund',
                        'Refunded ' . count($chosen) . ' of ' . count($held) . ' seats: ' . $text,
                        -$refund, $reason);
+        $booking['seat_count'] = (int)$booking['seat_count'] - count($chosen);
+        $booking['total_amount'] = round((float)$booking['total_amount'] - $refund, 2);
+        $remaining = get_held_seats($booking_id, true);
         $conn->commit();
-        return ['refund' => $refund, 'seats' => $text, 'cancelled' => false];
+        return ['refund'=>$refund, 'seats'=>$text, 'cancelled'=>false,
+                'booking'=>$booking, 'seat_rows'=>$remaining];
     } catch (Throwable $ex) {
         $conn->rollback();
         throw $ex;
@@ -263,7 +251,7 @@ function staff_refund_seats(int $booking_id, array $seat_ids, string $reason, in
  * @return array{from: string, to: string, difference: float}
  */
 function staff_move_seat(int $booking_id, int $from_seat, int $to_seat,
-                         string $reason, int $staff_id): array
+                         string $reason, int $staff_id, string $upgrade_payment = ''): array
 {
     if ($from_seat === $to_seat) {
         throw new RuntimeException('Choose a different seat to move to.');
@@ -301,6 +289,12 @@ function staff_move_seat(int $booking_id, int $from_seat, int $to_seat,
         $newPrice   = round((float) $from['seat_price'] - (float) $from['surcharge']
                             + (float) $to['surcharge'], 2);
         $difference = round($newPrice - (float) $from['seat_price'], 2);
+        /* As with checkout, payment is simulated. An upgrade is never put on credit. */
+        if ($difference > 0 && $upgrade_payment !== 'success') {
+            throw new RuntimeException($upgrade_payment === 'declined'
+                ? 'The additional payment was declined. The seat and booking are unchanged.'
+                : 'Approve the simulated additional payment before upgrading this seat. Nothing was changed.');
+        }
 
         /* UPDATE - the UNIQUE (showtime_id, seat_id) key refuses a seat
            someone else bought a moment ago, and the transaction rolls back. */
@@ -321,10 +315,14 @@ function staff_move_seat(int $booking_id, int $from_seat, int $to_seat,
         $fromText = $from['seat_row'] . $from['seat_number'];
         $toText   = $to['seat_row'] . $to['seat_number'];
         log_adjustment($booking_id, $staff_id, 'seat_change',
-                       "Moved {$fromText} ({$from['seat_type']}) to {$toText} ({$to['seat_type']})",
+                       "Moved {$fromText} ({$from['seat_type']}) to {$toText} ({$to['seat_type']})"
+                       . ($difference > 0 ? '; simulated additional payment approved' : ""),
                        $difference, $reason);
+        $booking['total_amount'] = round((float)$booking['total_amount'] + $difference, 2);
+        $currentSeats = get_held_seats($booking_id, true);
         $conn->commit();
-        return ['from' => $fromText, 'to' => $toText, 'difference' => $difference];
+        return ['from'=>$fromText, 'to'=>$toText, 'difference'=>$difference,
+                'booking'=>$booking, 'seat_rows'=>$currentSeats];
     } catch (Throwable $ex) {
         $conn->rollback();
         throw $ex;

@@ -2,15 +2,15 @@
  * tests/ui_tests.js - browser checks for the JavaScript side
  *
  * run_tests.php drives the site without a browser, so it cannot see
- * client-side validation, the seat picker or the phone layout. These
- * six cases cover that, using Playwright (headless Chromium).
+ * client-side validation or the seat picker. These
+ * five cases cover that, using Playwright (headless Chromium).
  *
  * Optional: needs Node.js and Playwright
  *     npm install playwright && npx playwright install chromium
  * Then, with the site running (XAMPP Apache + MySQL, seed imported):
  *     node tests/ui_tests.js http://localhost/Cinema-Web-Application-design/cinesphere/
  *
- * Without Node, run the same six cases by hand from tests/README.md.
+ * Without Node, run the same five cases by hand from tests/README.md.
  * ===================================================================== */
 
 const { chromium } = require('playwright');
@@ -30,7 +30,7 @@ async function fieldError(page, selector) {
 }
 
 /* UI01 ------------------------------------------------------------- */
-tc('UI01', 'F3, R9', 'Register: passwords that do not match are caught before sending', 'Name, email, phone, born 2000-05-17, password Movie#2026, confirm Movie#2027, terms ticked; press Create account', 'Inline "passwords do not match" error under Confirm; the form is not sent', async (page) => {
+tc('UI01', 'F3, R8', 'Register: passwords that do not match are caught before sending', 'Name, email, phone, born 2000-05-17, password Movie#2026, confirm Movie#2027, terms ticked; press Create account', 'Inline "passwords do not match" error under Confirm; the form is not sent', async (page) => {
     await page.goto(BASE + 'account.php?tab=register');
     await page.fill('#r-name', 'Tan Wei Ming');
     await page.fill('#r-email', 'ui.test@example.com');
@@ -48,7 +48,7 @@ tc('UI01', 'F3, R9', 'Register: passwords that do not match are caught before se
 });
 
 /* UI02 ------------------------------------------------------------- */
-tc('UI02', 'F3, R9', 'Register: age under 13 is caught before sending', 'Date of birth = today minus 10 years, then leave the field', 'Inline error "must be at least 13 years old"', async (page) => {
+tc('UI02', 'F3, R8', 'Register: age under 13 is caught before sending', 'Date of birth = today minus 10 years, then leave the field', 'Inline error "must be at least 13 years old"', async (page) => {
     await page.goto(BASE + 'account.php?tab=register');
     const d = new Date(); d.setFullYear(d.getFullYear() - 10);
     await page.fill('#r-dob', d.toISOString().slice(0, 10));
@@ -82,7 +82,7 @@ tc('UI03', 'F4', 'Seat map: picking 2 seats updates the total and the hidden fie
 });
 
 /* UI04 ------------------------------------------------------------- */
-tc('UI04', 'F4, R6', 'Seat map: arrow keys move between seats', 'Focus the first free seat, press the Right arrow key', 'Keyboard focus moves to the next seat', async (page) => {
+tc('UI04', 'F4, R5', 'Seat map: arrow keys move between seats', 'Focus the first free seat, press the Right arrow key', 'Keyboard focus moves to the next seat', async (page) => {
     const first = page.locator('button.seat:not([disabled])').first();
     await first.focus();
     const before = await page.evaluate(() => document.activeElement.getAttribute('data-seat'));
@@ -92,21 +92,7 @@ tc('UI04', 'F4, R6', 'Seat map: arrow keys move between seats', 'Focus the first
 });
 
 /* UI05 ------------------------------------------------------------- */
-tc('UI05', 'R5, R6', 'Phone width (390px): menu opens and closes, no sideways scrolling', 'Viewport 390 x 844; press the menu button, then Escape', 'Menu opens (aria-expanded=true), Escape closes it; page is no wider than the screen', async (page) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(BASE + 'index.php');
-    await page.click('#nav-toggle');
-    const open = await page.getAttribute('#nav-toggle', 'aria-expanded');
-    await page.keyboard.press('Escape');
-    const closed = await page.getAttribute('#nav-toggle', 'aria-expanded');
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-    await page.setViewportSize({ width: 1280, height: 800 });
-    return [open === 'true' && closed === 'false' && overflow <= 0,
-            `Menu open=${open}, after Escape=${closed}; page wider than screen by ${overflow}px`];
-});
-
-/* UI06 ------------------------------------------------------------- */
-tc('UI06', 'F9, R9', 'Contact: a message under 20 characters is caught before sending', 'Valid contact details with message "Too short" (9 characters); press Send', 'Inline error "at least 20 characters"; the form is not sent', async (page) => {
+tc('UI05', 'F9, R8', 'Contact: a message under 20 characters is caught before sending', 'Valid contact details with message "Too short" (9 characters); press Send', 'Inline error "at least 20 characters"; the form is not sent', async (page) => {
     await page.goto(BASE + 'contact.php');
     await page.fill('#c-name', 'Aisha Rahman');
     await page.fill('#c-email', 'aisha@example.com');

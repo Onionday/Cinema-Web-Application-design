@@ -8,7 +8,7 @@ PASS/FAIL and write a results table in the report's test case format:
 | File | What it is |
 |---|---|
 | `run_tests.php` | 51 server-side test cases (TC01 to TC51). Pages, forms, database, email, security |
-| `ui_tests.js` | 6 browser test cases (UI01 to UI06). JavaScript validation, seat picker, phone layout |
+| `ui_tests.js` | 5 browser test cases (UI01 to UI05). JavaScript validation, seat picker, keyboard use |
 | `financial_cases.php`, `financial_worker.php` | Nine financial regression cases, including concurrent PHP workers; loaded by the server suite |
 | `mail_sink.php` | Helper for `run_tests.php`: catches the site's emails so nothing is sent |
 | `test-results.md` | Latest results of `run_tests.php`, ready to paste into the report |
@@ -57,7 +57,7 @@ node tests\ui_tests.js http://localhost/Cinema-Web-Application-design/cinesphere
 Apache and MySQL must be running, with the seed imported. It signs in as the demo
 customer but does not book anything.
 
-**Without Node.js**, do the same six checks by hand in Chrome and record the result:
+**Without Node.js**, do the same five checks by hand in Chrome and record the result:
 
 | ID | Steps | Expected |
 |---|---|---|
@@ -65,8 +65,7 @@ customer but does not book anything.
 | UI02 | Register tab: date of birth 10 years ago, click elsewhere | Error: must be at least 13 years old |
 | UI03 | Sign in as demo, open any screening's seat map, click two free seats | Total = both seat prices + S$0.80 each |
 | UI04 | On the seat map, click a seat, then press the Right arrow key | Focus moves to the next seat |
-| UI05 | Dev tools (F12) → device toolbar → 390 px wide; tap the menu button, press Escape | Menu opens, then closes; no sideways scrolling |
-| UI06 | Contact page: valid details, message `Too short`, press Send | Error: at least 20 characters; page does not submit |
+| UI05 | Contact page: valid details, message `Too short`, press Send | Error: at least 20 characters; page does not submit |
 
 ## 3. What is covered
 
@@ -80,14 +79,14 @@ customer but does not book anything.
 | F6 Final selection and payment | TC20, TC21, TC23 |
 | F7 Confirmation and email | TC21, TC22 |
 | F8 History and cancellation | TC24, TC25, TC26 |
-| F9 Contact and feedback | TC27, TC28, UI06 |
+| F9 Contact and feedback | TC27, TC28, UI05 |
 | F10 Staff tools (scheduling, booking changes, prices) | TC30 to TC40 |
 | R4 Consistent pages and titles | TC01 |
-| R5, R6 Responsive and keyboard accessible | UI04, UI05 |
-| R7 Security (hashing, CSRF, SQL injection, XSS, access control) | TC07, TC12, TC13, TC14, TC26, TC29, TC30 |
-| R8 No double sale | TC23, TC37 |
-| R9 Three-layer validation | TC06, TC08 to TC10, TC17, TC28, TC32, TC38, TC40, UI01, UI02, UI06 |
-| R12 Email only to the local mailbox | TC22 |
+| R5 Keyboard accessible | UI04 |
+| R6 Security (hashing, CSRF, SQL injection, XSS, access control) | TC07, TC12, TC13, TC14, TC26, TC29, TC30 |
+| R7 No double sale | TC23, TC37 |
+| R8 Three-layer validation | TC06, TC08 to TC10, TC17, TC28, TC32, TC38, TC40, UI01, UI02, UI05 |
+| R11 Email only to the local mailbox | TC22 |
 
 **A bug these tests found.** TC13 showed that a form posted with no CSRF token was
 accepted when the visitor's session had no token yet, because the check compared
@@ -126,7 +125,7 @@ Install Playwright and Chromium as described above. To use an installed Edge
 browser instead, set `PLAYWRIGHT_CHANNEL=msedge` in the process environment
 (PowerShell: `$env:PLAYWRIGHT_CHANNEL='msedge'`). No personal browser profile is
 used. This mode preserves the latest server test report and updates only the
-browser report. The 28 October browser run passed all six cases using Edge.
+browser report. The 28 October browser run passed all six cases using Edge (five after the phone case was removed on 9 November).
 
 The initial six new regression cases failed against unmodified main; after the
 fixes and additional concurrency/negative-path coverage, all 51 server cases

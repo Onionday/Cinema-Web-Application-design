@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CineSphere site map and booking storyboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; background: #ffffff; color: #1a1a1a; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    svg { width: 100%; min-width: 720px; display: block; }
+    @media print { .diagram-container { overflow-x: visible; } svg { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <div class="diagram-container">
+    <svg viewBox="0 0 720 516" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig1-sitemap-title fig1-sitemap-desc">
+      <title id="fig1-sitemap-title">CineSphere site map and booking storyboard</title>
+      <desc id="fig1-sitemap-desc">Site map of the eleven pages grouped by who may open them, and the booking task from seat map through short-list and payment to e-ticket and booking history.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4b5563"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1f3a68"/></marker>
+        <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1f3a68"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#ffffff"/>
+      <text x="24" y="20" fill="#4b5563" font-size="10.5" font-weight="700" font-family="'Courier New', Courier, monospace" text-anchor="start" letter-spacing="0.12em">SITE MAP</text>
+      <path d="M 360 68 L 360 108" fill="none" stroke="#4b5563" stroke-width="1.1" marker-end="url(#arrow)"/>
+      <path d="M 280 42 L 20 42 Q 12 42 12 50 L 12 264 Q 12 272 20 272 L 36 272" fill="none" stroke="#4b5563" stroke-width="1.1" marker-end="url(#arrow)"/>
+      <path d="M 440 42 L 700 42 Q 708 42 708 50 L 708 264 Q 708 272 700 272 L 684 272" fill="none" stroke="#4b5563" stroke-width="1.1" marker-end="url(#arrow)"/>
+      <path d="M 156 162 L 184 162" fill="none" stroke="#4b5563" stroke-width="1.1" marker-end="url(#arrow)"/>
+      <rect x="24" y="108" width="672" height="96" rx="8" fill="rgba(26,26,26,0.025)" stroke="rgba(26,26,26,0.16)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="36" y="126" fill="#4b5563" font-size="10.5" font-weight="700" font-family="'Courier New', Courier, monospace" text-anchor="start" letter-spacing="0.12em">OPEN TO EVERYONE</text>
+      <rect x="36" y="224" width="284" height="96" rx="8" fill="rgba(26,26,26,0.025)" stroke="rgba(26,26,26,0.16)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="48" y="242" fill="#4b5563" font-size="10.5" font-weight="700" font-family="'Courier New', Courier, monospace" text-anchor="start" letter-spacing="0.12em">SIGNED-IN CUSTOMER</text>
+      <rect x="544" y="224" width="140" height="96" rx="8" fill="rgba(26,26,26,0.025)" stroke="rgba(26,26,26,0.16)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="556" y="242" fill="#4b5563" font-size="10.5" font-weight="700" font-family="'Courier New', Courier, monospace" text-anchor="start" letter-spacing="0.12em">STAFF ROLE</text>
+      <rect x="280" y="16" width="160" height="52" rx="6" fill="#ffffff"/>
+      <rect x="280" y="16" width="160" height="52" rx="6" fill="rgba(31,58,104,0.08)" stroke="#1f3a68" stroke-width="1.6"/>
+      <text x="360" y="40" fill="#1f3a68" font-size="14" font-weight="700" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">Home</text>
+      <text x="360" y="56" fill="#4b5563" font-size="11" font-family="'Courier New', Courier, monospace" text-anchor="middle">index.php</text>
+      <rect x="40" y="136" width="116" height="52" rx="6" fill="#ffffff"/>
+      <rect x="40" y="136" width="116" height="52" rx="6" fill="#ffffff" stroke="#4b5563" stroke-width="1"/>
+      <text x="98" y="160" fill="#1a1a1a" font-size="14" font-weight="700" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">Films</text>
+      <text x="98" y="176" fill="#4b5563" font-size="11" font-family="'Courier New', Courier, monospace" text-anchor="middle">movies.php</text>
+      <rect x="184" y="136" width="116" height="52" rx="6" fill="#ffffff"/>
+      <rect x="184" y="136" width="116" height="52" rx="6" fill="#ffffff" stroke="#4b5563" stroke-width="1"/>
+      <text x="242" y="160" fill="#1a1a1a" font-size="14" font-weight="700" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">Film details</text>
+      <text x="242" y="176" fill="#4b5563" font-size="11" font-family="'Courier New', Courier, monospace" text-anchor="middle">movie.php</text>
+      <rect x="312" y="136" width="116" height="52" rx="6" fill="#ffffff"/>
+      <rect x="312" y="136" width="116" height="52" rx="6" fill="#ffffff" stroke="#4b5563" stroke-width="1"/>
+      <text x="370" y="160" fill="#1a1a1a" font-size="14" font-weight="700" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">Schedule</text>
+      <text x="370" y="176" fill="#4b5563" font-size="11" font-family="'Courier New', Courier, monospace" text-anchor="middle">showtimes.php</text>
+      <rect x="440" y="136" width="116" height="52" rx="6" fill="#ffffff"/>
+      <rect x="440" y="136" width="116" height="52" rx="6" fill="#ffffff" stroke="#4b5563" stroke-width="1"/>
+      <text x="498" y="160" fill="#1a1a1a" font-size="14" font-weight="700" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">Contact</text>
+      <text x="498" y="176" fill="#4b5563" font-size="11" font-family="'Courier New', Courier, monospace" text-anchor="middle">contact.php</text>
+      <rect x="568" y="136" width="116" height="52" rx="6" fill="#ffffff"/>
+      <rect x="568" y="136" width="116" height="52" rx="6" fill="#ffffff" stroke="#4b5563" stroke-width="1"/>
+      <text x="626" y="160" fill="#1a1a1a" font-size="14" font-weight="700" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">Account</text>
+      <text x="626" y="176" fill="#4b5563" font-size="11" font-family="'Courier New', Courier, monospace" text-anchor="middle">account.php</text>
+      <rect x="48" y="252" width="124" height="52" rx="6" fill="#ffffff"/>
+      <rect x="48" y="252" width="124" height="52" rx="6" fill="#ffffff" stroke="#4b5563" stroke-width="1"/>
+      <text x="110" y="276" fill="#1a1a1a" font-size="14" font-weight="700" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">Short-list</text>
+      <text x="110" y="292" fill="#4b5563" font-size="11" font-family="'Courier New', Courier, monospace" text-anchor="middle">preferences.php</text>
+      <rect x="184" y="252" width="124" height="52" rx="6" fill="#ffffff"/>
+      <rect x="184" y="252" width="124" height="52" rx="6" fill="#ffffff" stroke="#4b5563" stroke-width="1"/>
+      <text x="246" y="276" fill="#1a1a1a" font-size="14" font-weight="700" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">My bookings</text>
+      <text x="246" y="292" fill="#4b5563" font-size="11" font-family="'Courier New', Courier, monospace" text-anchor="middle">mybookings.php</text>
+      <rect x="556" y="252" width="116" height="52" rx="6" fill="#ffffff"/>
+      <rect x="556" y="252" width="116" height="52" rx="6" fill="#ffffff" stroke="#4b5563" stroke-width="1"/>
+      <text x="614" y="276" fill="#1a1a1a" font-size="14" font-weight="700" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">Staff</text>
+      <text x="614" y="292" fill="#4b5563" font-size="11" font-family="'Courier New', Courier, monospace" text-anchor="middle">admin.php</text>
+      <text x="432" y="266" fill="#4b5563" font-size="13.5" font-style="italic" font-family="'Times New Roman', Times, serif" text-anchor="middle">Every page is one click from Home</text>
+      <text x="432" y="282" fill="#4b5563" font-size="13.5" font-style="italic" font-family="'Times New Roman', Times, serif" text-anchor="middle">through the navigation bar.</text>
+      <line x1="24" y1="344" x2="696" y2="344" stroke="rgba(26,26,26,0.16)" stroke-width="1"/>
+      <text x="24" y="372" fill="#4b5563" font-size="10.5" font-weight="700" font-family="'Courier New', Courier, monospace" text-anchor="start" letter-spacing="0.12em">BOOKING STORYBOARD</text>
+      <text x="696" y="372" fill="#4b5563" font-size="13.5" font-style="italic" font-family="'Times New Roman', Times, serif" text-anchor="end">Starts from a Book button on Home, Film details or Schedule</text>
+      <path d="M 120 422 L 148 422" fill="none" stroke="#4b5563" stroke-width="1.1" marker-end="url(#arrow)"/>
+      <path d="M 268 422 L 292 422" fill="none" stroke="#4b5563" stroke-width="1.1" marker-end="url(#arrow)"/>
+      <path d="M 404 422 L 432 422" fill="none" stroke="#4b5563" stroke-width="1.1" marker-end="url(#arrow)"/>
+      <path d="M 552 422 L 584 422" fill="none" stroke="#4b5563" stroke-width="1.1" marker-end="url(#arrow)"/>
+      <path d="M 348 458 L 348 468 Q 348 476 340 476 L 216 476 Q 208 476 208 468 L 208 448" fill="none" stroke="#4b5563" stroke-width="1.1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+      <rect x="120" y="400" width="28" height="14" rx="2" fill="#ffffff"/>
+      <text x="134" y="410.5" fill="#6b7280" font-size="10" font-weight="700" font-family="'Courier New', Courier, monospace" text-anchor="middle" letter-spacing="0.04em">ADD</text>
+      <rect x="266" y="400" width="28" height="14" rx="2" fill="#ffffff"/>
+      <text x="280" y="410.5" fill="#6b7280" font-size="10" font-weight="700" font-family="'Courier New', Courier, monospace" text-anchor="middle" letter-spacing="0.04em">PAY</text>
+      <rect x="404" y="400" width="28" height="14" rx="2" fill="#ffffff"/>
+      <text x="418" y="410.5" fill="#6b7280" font-size="10" font-weight="700" font-family="'Courier New', Courier, monospace" text-anchor="middle" letter-spacing="0.04em">YES</text>
+      <rect x="356" y="459" width="22" height="14" rx="2" fill="#ffffff"/>
+      <text x="367" y="469.5" fill="#6b7280" font-size="10" font-weight="700" font-family="'Courier New', Courier, monospace" text-anchor="middle" letter-spacing="0.04em">NO</text>
+      <rect x="24" y="396" width="96" height="52" rx="6" fill="#ffffff"/>
+      <rect x="24" y="396" width="96" height="52" rx="6" fill="#ffffff" stroke="#4b5563" stroke-width="1"/>
+      <text x="72" y="420" fill="#1a1a1a" font-size="14" font-weight="700" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">Seat map</text>
+      <text x="72" y="436" fill="#4b5563" font-size="11" font-family="'Courier New', Courier, monospace" text-anchor="middle">booking.php</text>
+      <rect x="148" y="396" width="120" height="52" rx="6" fill="#ffffff"/>
+      <rect x="148" y="396" width="120" height="52" rx="6" fill="rgba(31,58,104,0.08)" stroke="#1f3a68" stroke-width="1.6"/>
+      <text x="208" y="420" fill="#1f3a68" font-size="14" font-weight="700" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">Short-list</text>
+      <text x="208" y="436" fill="#4b5563" font-size="11" font-family="'Courier New', Courier, monospace" text-anchor="middle">preferences.php</text>
+      <polygon points="348,386 404,422 348,458 292,422" fill="#ffffff"/>
+      <polygon points="348,386 404,422 348,458 292,422" fill="#ffffff" stroke="#4b5563" stroke-width="1"/>
+      <text x="348" y="419" fill="#1a1a1a" font-size="11.5" font-weight="700" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">Payment</text>
+      <text x="348" y="434" fill="#1a1a1a" font-size="11.5" font-weight="700" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">approved?</text>
+      <rect x="432" y="396" width="120" height="52" rx="6" fill="#ffffff"/>
+      <rect x="432" y="396" width="120" height="52" rx="6" fill="#ffffff" stroke="#4b5563" stroke-width="1"/>
+      <text x="492" y="420" fill="#1a1a1a" font-size="14" font-weight="700" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">E-ticket, email</text>
+      <text x="492" y="436" fill="#4b5563" font-size="11" font-family="'Courier New', Courier, monospace" text-anchor="middle">confirmation.php</text>
+      <rect x="584" y="396" width="112" height="52" rx="6" fill="#ffffff"/>
+      <rect x="584" y="396" width="112" height="52" rx="6" fill="#ffffff" stroke="#4b5563" stroke-width="1"/>
+      <text x="640" y="420" fill="#1a1a1a" font-size="14" font-weight="700" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">My bookings</text>
+      <text x="640" y="436" fill="#4b5563" font-size="11" font-family="'Courier New', Courier, monospace" text-anchor="middle">mybookings.php</text>
+      <text x="220" y="498" fill="#4b5563" font-size="13.5" font-style="italic" font-family="'Times New Roman', Times, serif" text-anchor="start">Declined: nothing booked, short-list kept</text>
+      <text x="696" y="472" fill="#4b5563" font-size="13.5" font-style="italic" font-family="'Times New Roman', Times, serif" text-anchor="end">Cancel up to 2 h before;</text>
+      <text x="696" y="488" fill="#4b5563" font-size="13.5" font-style="italic" font-family="'Times New Roman', Times, serif" text-anchor="end">seats go back on sale</text>
+
+    </svg>
+  </div>
+</body>
+</html>

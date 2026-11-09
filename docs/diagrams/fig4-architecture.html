@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>One request through the CineSphere stack</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; background: #ffffff; color: #1a1a1a; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    svg { width: 100%; min-width: 720px; display: block; }
+    @media print { .diagram-container { overflow-x: visible; } svg { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <div class="diagram-container">
+    <svg viewBox="0 0 720 444" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig4-architecture-title fig4-architecture-desc">
+      <title id="fig4-architecture-title">One request through the CineSphere stack</title>
+      <desc id="fig4-architecture-desc">Sequence of one page request: the browser asks Apache, Apache hands the PHP file to the PHP engine, PHP runs a prepared query on MySQL, and the HTML travels back, while static files come straight from Apache.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4b5563"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1f3a68"/></marker>
+        <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1f3a68"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#ffffff"/>
+      <line x1="96" y1="68" x2="96" y2="360" stroke="rgba(26,26,26,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="272" y1="68" x2="272" y2="360" stroke="rgba(26,26,26,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="448" y1="68" x2="448" y2="360" stroke="rgba(26,26,26,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="624" y1="68" x2="624" y2="360" stroke="rgba(26,26,26,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+      <rect x="268" y="96" width="8" height="176" fill="rgba(26,26,26,0.06)" stroke="#4b5563" stroke-width="0.8"/>
+      <rect x="444" y="128" width="8" height="112" fill="rgba(26,26,26,0.06)" stroke="#4b5563" stroke-width="0.8"/>
+      <rect x="620" y="160" width="8" height="48" fill="rgba(26,26,26,0.06)" stroke="#4b5563" stroke-width="0.8"/>
+      <rect x="268" y="304" width="8" height="48" fill="rgba(26,26,26,0.06)" stroke="#4b5563" stroke-width="0.8"/>
+      <path d="M 96 104 L 268 104" fill="none" stroke="#4b5563" stroke-width="1.1" marker-end="url(#arrow)"/>
+      <rect x="149" y="83" width="70" height="14" rx="2" fill="#ffffff"/>
+      <text x="184" y="93.5" fill="#6b7280" font-size="10" font-weight="700" font-family="'Courier New', Courier, monospace" text-anchor="middle" letter-spacing="0.04em">1 GET PAGE</text>
+      <path d="M 276 136 L 444 136" fill="none" stroke="#4b5563" stroke-width="1.1" marker-end="url(#arrow)"/>
+      <rect x="325" y="115" width="70" height="14" rx="2" fill="#ffffff"/>
+      <text x="360" y="125.5" fill="#6b7280" font-size="10" font-weight="700" font-family="'Courier New', Courier, monospace" text-anchor="middle" letter-spacing="0.04em">2 RUN .PHP</text>
+      <path d="M 452 168 L 620 168" fill="none" stroke="#1f3a68" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <rect x="489" y="147" width="94" height="14" rx="2" fill="#ffffff"/>
+      <text x="536" y="157.5" fill="#6b7280" font-size="10" font-weight="700" font-family="'Courier New', Courier, monospace" text-anchor="middle" letter-spacing="0.04em">3 PREPARED SQL</text>
+      <path d="M 620 200 L 452 200" fill="none" stroke="#4b5563" stroke-width="1.1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+      <rect x="513" y="179" width="46" height="14" rx="2" fill="#ffffff"/>
+      <text x="536" y="189.5" fill="#6b7280" font-size="10" font-weight="700" font-family="'Courier New', Courier, monospace" text-anchor="middle" letter-spacing="0.04em">4 ROWS</text>
+      <path d="M 444 232 L 276 232" fill="none" stroke="#4b5563" stroke-width="1.1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+      <rect x="337" y="211" width="46" height="14" rx="2" fill="#ffffff"/>
+      <text x="360" y="221.5" fill="#6b7280" font-size="10" font-weight="700" font-family="'Courier New', Courier, monospace" text-anchor="middle" letter-spacing="0.04em">5 HTML</text>
+      <path d="M 268 264 L 96 264" fill="none" stroke="#4b5563" stroke-width="1.1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+      <rect x="161" y="243" width="46" height="14" rx="2" fill="#ffffff"/>
+      <text x="184" y="253.5" fill="#6b7280" font-size="10" font-weight="700" font-family="'Courier New', Courier, monospace" text-anchor="middle" letter-spacing="0.04em">6 PAGE</text>
+      <path d="M 96 312 L 268 312" fill="none" stroke="#4b5563" stroke-width="1.1" marker-end="url(#arrow)"/>
+      <rect x="146" y="291" width="76" height="14" rx="2" fill="#ffffff"/>
+      <text x="184" y="301.5" fill="#6b7280" font-size="10" font-weight="700" font-family="'Courier New', Courier, monospace" text-anchor="middle" letter-spacing="0.04em">GET CSS, JS</text>
+      <path d="M 268 344 L 96 344" fill="none" stroke="#4b5563" stroke-width="1.1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+      <rect x="146" y="323" width="76" height="14" rx="2" fill="#ffffff"/>
+      <text x="184" y="333.5" fill="#6b7280" font-size="10" font-weight="700" font-family="'Courier New', Courier, monospace" text-anchor="middle" letter-spacing="0.04em">STATIC FILE</text>
+      <rect x="20" y="16" width="152" height="52" rx="6" fill="#ffffff"/>
+      <rect x="20" y="16" width="152" height="52" rx="6" fill="#ffffff" stroke="#4b5563" stroke-width="1"/>
+      <text x="96" y="40" fill="#1a1a1a" font-size="14" font-weight="700" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">Browser</text>
+      <text x="96" y="56" fill="#4b5563" font-size="11" font-family="'Courier New', Courier, monospace" text-anchor="middle">PHPSESSID cookie</text>
+      <rect x="196" y="16" width="152" height="52" rx="6" fill="#ffffff"/>
+      <rect x="196" y="16" width="152" height="52" rx="6" fill="#ffffff" stroke="#4b5563" stroke-width="1"/>
+      <text x="272" y="40" fill="#1a1a1a" font-size="14" font-weight="700" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">Apache (XAMPP)</text>
+      <text x="272" y="56" fill="#4b5563" font-size="11" font-family="'Courier New', Courier, monospace" text-anchor="middle">serves static files</text>
+      <rect x="372" y="16" width="152" height="52" rx="6" fill="#ffffff"/>
+      <rect x="372" y="16" width="152" height="52" rx="6" fill="rgba(31,58,104,0.08)" stroke="#1f3a68" stroke-width="1.6"/>
+      <text x="448" y="40" fill="#1f3a68" font-size="14" font-weight="700" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">PHP engine</text>
+      <text x="448" y="56" fill="#4b5563" font-size="11" font-family="'Courier New', Courier, monospace" text-anchor="middle">pages + handlers</text>
+      <rect x="548" y="16" width="152" height="52" rx="6" fill="#ffffff"/>
+      <rect x="548" y="16" width="152" height="52" rx="6" fill="#ffffff" stroke="#4b5563" stroke-width="1"/>
+      <text x="624" y="40" fill="#1a1a1a" font-size="14" font-weight="700" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">MySQL</text>
+      <text x="624" y="56" fill="#4b5563" font-size="11" font-family="'Courier New', Courier, monospace" text-anchor="middle">13 tables + 1 view</text>
+      <text x="104" y="384" fill="#4b5563" font-size="13.5" font-style="italic" font-family="'Times New Roman', Times, serif" text-anchor="start">CSS, JavaScript and images come straight from Apache; PHP is not involved.</text>
+      <line x1="24" y1="404" x2="696" y2="404" stroke="rgba(26,26,26,0.16)" stroke-width="1"/>
+      <text x="24" y="428" fill="#4b5563" font-size="10.5" font-weight="700" font-family="'Courier New', Courier, monospace" text-anchor="start" letter-spacing="0.12em">LEGEND</text>
+      <line x1="104" y1="424" x2="140" y2="424" stroke="#4b5563" stroke-width="1.1" marker-end="url(#arrow)"/>
+      <text x="150" y="428" fill="#4b5563" font-size="11.5" font-family="Arial, Helvetica, sans-serif">Request</text>
+      <line x1="232" y1="424" x2="268" y2="424" stroke="#4b5563" stroke-width="1.1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+      <text x="278" y="428" fill="#4b5563" font-size="11.5" font-family="Arial, Helvetica, sans-serif">Response</text>
+      <rect x="364" y="418" width="8" height="12" fill="rgba(26,26,26,0.06)" stroke="#4b5563" stroke-width="0.8"/>
+      <text x="380" y="428" fill="#4b5563" font-size="11.5" font-family="Arial, Helvetica, sans-serif">Busy handling the request</text>
+
+    </svg>
+  </div>
+</body>
+</html>

@@ -125,11 +125,12 @@ C:\xampp\php\php.exe tests\run_tests.php
   deleted afterwards, so your real data is never touched. Results are written
   to `tests/test-results.md` as a table in the report's format (input data,
   expected output, test method, test result).
-- **6 browser test cases** (`tests/ui_tests.js`, needs Node.js and Playwright)
-  for the JavaScript validation, seat picker and phone layout. Without Node.js,
+- **5 browser test cases** (`tests/ui_tests.js`, needs Node.js and Playwright)
+  for the JavaScript validation, seat picker and keyboard use. Without Node.js,
   the same checks can be done by hand from `tests/README.md`.
 
-Latest run: **51/51 and 6/6 passed** (28 Oct 2026).
+Latest run: **51/51 and 6/6 passed** (28 Oct 2026). The phone-width browser case
+was removed on 9 Nov 2026 to match the report, leaving 5 browser cases.
 
 ---
 

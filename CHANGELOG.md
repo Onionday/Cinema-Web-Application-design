@@ -73,10 +73,10 @@ Updated: `admin.php`, `admin_action.php`, `includes/mailer.php`, `includes/auth.
 | File | Covers |
 |---|---|
 | `run_tests.php` | 42 cases across F1 to F10, security, double sales, email, staff tools and the rolling schedule. Needs only XAMPP; uses a throw-away database and catches emails locally |
-| `ui_tests.js` | 6 browser cases: JavaScript validation, seat picker, keyboard use, phone layout (Playwright) |
+| `ui_tests.js` | 5 browser cases: JavaScript validation, seat picker, keyboard use (Playwright). The phone-layout case was removed on 9 Nov 2026 to match the report |
 | `test-results.md`, `ui-test-results.md` | Result tables in the report's format: input, expected output, method, result |
 
-Result: 42/42 and 6/6 passed.
+Result: 42/42 and 6/6 passed (5/5 after the phone case was removed on 9 Nov 2026).
 
 ### Bugs fixed
 

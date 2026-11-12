@@ -1,11 +1,11 @@
-"""Builds the three report diagrams (Figures 1, 4 and 5) as self-contained HTML/SVG.
 
-Style: matched to the IE4727 report (white paper, near-black ink, one navy
-accent, Arial names, Courier New file names, Times New Roman italic callouts).
-System fonts only, so the files render offline and in print.
 
-Run:  python docs/diagrams/build_diagrams.py
-"""
+
+
+
+
+
+
 import os
 from xml.sax.saxutils import escape
 
@@ -59,9 +59,9 @@ def page(slug, title, desc, h, body):
 '''
 
 
-# ------------------------------------------------------------------ primitives
+
 def elbow(points, r=8, accent=False, dashed=False):
-    """Orthogonal path through points with rounded corners of radius r."""
+
     d = 'M %d %d' % points[0]
     for i in range(1, len(points) - 1):
         (x0, y0), (x1, y1), (x2, y2) = points[i - 1], points[i], points[i + 1]
@@ -81,7 +81,7 @@ def line(x1, y1, x2, y2, accent=False, dashed=False):
 
 
 def label(cx, cy, text, anchor='middle'):
-    """Arrow label: caps mono on an opaque mask; (cx, cy) is the mask centre."""
+
     w = int(len(text) * 6.0 + 10)
     x = cx - w / 2 if anchor == 'middle' else (cx if anchor == 'start' else cx - w)
     tx = x + w / 2
@@ -130,20 +130,20 @@ def hairline(y):
     return f'      <line x1="24" y1="{y}" x2="{W - 24}" y2="{y}" stroke="{RULE}" stroke-width="1"/>\n'
 
 
-# ------------------------------------------------------------------ Figure 1
+
 def figure1():
     b = ''
     b += eyebrow_text(24, 20, 'SITE MAP')
-    # connectors first
-    b += line(360, 68, 360, 108)                                    # Home -> open pages
-    b += elbow([(280, 42), (12, 42), (12, 272), (36, 272)])         # Home -> customer zone
-    b += elbow([(440, 42), (708, 42), (708, 272), (684, 272)])      # Home -> staff zone
-    b += line(156, 162, 184, 162)                                   # Films -> Film details
-    # zones
+
+    b += line(360, 68, 360, 108)
+    b += elbow([(280, 42), (12, 42), (12, 272), (36, 272)])
+    b += elbow([(440, 42), (708, 42), (708, 272), (684, 272)])
+    b += line(156, 162, 184, 162)
+
     b += zone(24, 108, 672, 96, 'OPEN TO EVERYONE')
     b += zone(36, 224, 284, 96, 'SIGNED-IN CUSTOMER')
     b += zone(544, 224, 140, 96, 'STAFF ROLE')
-    # nodes
+
     b += node(280, 16, 160, 52, 'Home', [('index.php', 'mono')], focal=True)
     for x, n, f in [(40, 'Films', 'movies.php'), (184, 'Film details', 'movie.php'),
                     (312, 'Schedule', 'showtimes.php'), (440, 'Contact', 'contact.php'),
@@ -154,23 +154,23 @@ def figure1():
     b += node(556, 252, 116, 52, 'Staff', [('admin.php', 'mono')])
     b += callout(432, 266, ['Every page is one click from Home', 'through the navigation bar.'], anchor='middle')
 
-    # storyboard
+
     b += hairline(344)
     b += eyebrow_text(24, 372, 'BOOKING STORYBOARD')
     b += callout(696, 372, ['Starts from a Book button on Home, Film details or Schedule'], anchor='end')
     mid = 422
-    b += line(120, mid, 148, mid)                                   # seat map -> short-list
-    b += line(268, mid, 292, mid)                                   # short-list -> payment
-    b += line(404, mid, 432, mid)                                   # yes -> e-ticket
-    b += line(552, mid, 584, mid)                                   # e-ticket -> my bookings
-    b += elbow([(348, 458), (348, 476), (208, 476), (208, 448)], dashed=True)   # no -> short-list
+    b += line(120, mid, 148, mid)
+    b += line(268, mid, 292, mid)
+    b += line(404, mid, 432, mid)
+    b += line(552, mid, 584, mid)
+    b += elbow([(348, 458), (348, 476), (208, 476), (208, 448)], dashed=True)
     b += label(134, mid - 15, 'ADD')
     b += label(280, mid - 15, 'PAY')
     b += label(418, mid - 15, 'YES')
     b += label(356, 466, 'NO', anchor='start')
     b += node(24, 396, 96, 52, 'Seat map', [('booking.php', 'mono')])
     b += node(148, 396, 120, 52, 'Short-list', [('preferences.php', 'mono')], focal=True)
-    # decision diamond
+
     b += (f'      <polygon points="348,386 404,422 348,458 292,422" fill="{PAPER}"/>\n'
           f'      <polygon points="348,386 404,422 348,458 292,422" fill="{PAPER}" stroke="{MUTED}" stroke-width="1"/>\n'
           f'      <text x="348" y="419" fill="{INK}" font-size="11.5" font-weight="700" font-family="{SANS}" text-anchor="middle">Payment</text>\n'
@@ -184,17 +184,17 @@ def figure1():
                 516, b)
 
 
-# ------------------------------------------------------------------ Figure 4
+
 def figure4():
     xs = [96, 272, 448, 624]
     b = ''
     top, bottom = 68, 360
     for x in xs:
         b += f'      <line x1="{x}" y1="{top}" x2="{x}" y2="{bottom}" stroke="rgba(26,26,26,0.22)" stroke-width="1" stroke-dasharray="3,3"/>\n'
-    # activation bars
+
     for x, y0, y1 in [(272, 96, 272), (448, 128, 240), (624, 160, 208), (272, 304, 352)]:
         b += f'      <rect x="{x - 4}" y="{y0}" width="8" height="{y1 - y0}" fill="rgba(26,26,26,0.06)" stroke="{MUTED}" stroke-width="0.8"/>\n'
-    msgs = [  # (from, to, y, label, dashed, accent)
+    msgs = [
         (0, 1, 104, '1 GET PAGE', False, False),
         (1, 2, 136, '2 RUN .PHP', False, False),
         (2, 3, 168, '3 PREPARED SQL', False, True),
@@ -217,7 +217,7 @@ def figure4():
     for x, (n, s, foc) in zip(xs, actors):
         b += node(x - 76, 16, 152, 52, n, [(s, 'mono')], focal=foc)
     b += callout(104, 384, ['CSS, JavaScript and images come straight from Apache; PHP is not involved.'])
-    # legend
+
     b += hairline(404)
     b += eyebrow_text(24, 428, 'LEGEND')
     b += f'      <line x1="104" y1="424" x2="140" y2="424" stroke="{MUTED}" stroke-width="1.1" marker-end="url(#arrow)"/>\n'
@@ -231,30 +231,30 @@ def figure4():
                 444, b)
 
 
-# ------------------------------------------------------------------ Figure 5
+
 def figure5():
-    L, R = 52, 412          # node x for the two lanes
+    L, R = 52, 412
     NW, NH = 256, 64
-    lcx, rcx = L + NW // 2, R + NW // 2     # 180, 540
-    ys = [56 + k * 76 for k in range(5)]    # 56, 132, 208, 284, 360
+    lcx, rcx = L + NW // 2, R + NW // 2
+    ys = [56 + k * 76 for k in range(5)]
     b = ''
-    # lanes
+
     b += f'      <line x1="360" y1="24" x2="360" y2="436" stroke="{RULE}" stroke-width="1"/>\n'
     b += eyebrow_text(lcx, 36, 'DISPLAY PAGES  ·  GET', anchor='middle')
     b += eyebrow_text(rcx, 36, 'FORM HANDLERS  ·  POST', anchor='middle')
-    # connectors (draw first)
+
     mids = [y + NH // 2 for y in ys]
-    b += elbow([(L + NW, mids[0]), (rcx, mids[0]), (rcx, ys[1])])                       # booking -> process_preference
-    b += elbow([(R, mids[1]), (lcx, mids[1]), (lcx, ys[2])])                            # 302 -> preferences
-    b += elbow([(L + NW, mids[2]), (rcx, mids[2]), (rcx, ys[3])])                       # preferences -> process_booking
-    b += elbow([(R, mids[3] + 10), (lcx, mids[3] + 10), (lcx, ys[4])], accent=True)    # paid -> confirmation
-    b += elbow([(R, mids[3] - 12), (lcx + 64, mids[3] - 12), (lcx + 64, ys[2] + NH)], dashed=True)  # declined
+    b += elbow([(L + NW, mids[0]), (rcx, mids[0]), (rcx, ys[1])])
+    b += elbow([(R, mids[1]), (lcx, mids[1]), (lcx, ys[2])])
+    b += elbow([(L + NW, mids[2]), (rcx, mids[2]), (rcx, ys[3])])
+    b += elbow([(R, mids[3] + 10), (lcx, mids[3] + 10), (lcx, ys[4])], accent=True)
+    b += elbow([(R, mids[3] - 12), (lcx + 64, mids[3] - 12), (lcx + 64, ys[2] + NH)], dashed=True)
     b += label(380, mids[0] - 14, 'POST')
     b += label(340, mids[1] - 14, '302 REDIRECT')
     b += label(380, mids[2] - 14, 'POST')
     b += label(296, mids[3] - 26, 'DECLINED')
     b += label(340, mids[3] + 24, 'PAID · 302')
-    # nodes
+
     b += node(L, ys[0], NW, NH, 'Seat map', [('booking.php', 'mono'), ('seats drawn from the database', 'sans')])
     b += node(R, ys[1], NW, NH, 'Save the choice', [('process_preference.php', 'mono'), ('CSRF, validate, INSERT', 'sans')])
     b += node(L, ys[2], NW, NH, 'Short-list', [('preferences.php', 'mono'), ('re-check seats, tick entries, pay', 'sans')])

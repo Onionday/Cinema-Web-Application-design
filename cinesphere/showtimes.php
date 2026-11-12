@@ -1,22 +1,22 @@
 <?php
-/* =====================================================================
- * showtimes.php - the full weekly schedule
- *
- * This is the project's main table display. Every row is generated on
- * the server from a joined SELECT against the availability view, and the
- * filter controls above it are processed server-side.
- * ===================================================================== */
+
+
+
+
+
+
+
 
 require_once __DIR__ . '/includes/auth.php';
 
-/* ---- Filters ------------------------------------------------------- */
+
 $movie_id  = (int) ($_GET['movie']  ?? 0);
 $cinema_id = (int) ($_GET['cinema'] ?? 0);
 $date      = trim((string) ($_GET['date'] ?? ''));
 $part      = trim((string) ($_GET['part'] ?? ''));
 $format    = trim((string) ($_GET['format'] ?? ''));
 
-/* A date is only accepted if it is a real date inside the week we sell. */
+
 $firstDay = date('Y-m-d');
 $lastDay  = date('Y-m-d', strtotime('+6 days'));
 
@@ -35,7 +35,7 @@ if (!in_array($format, ['', '2D', '3D', 'IMAX'], true)) {
     $format = '';
 }
 
-/* ---- Query --------------------------------------------------------- */
+
 $where  = ["v.status = 'open'", 'TIMESTAMP(v.show_date, v.show_time) >= NOW()'];
 $params = [];
 
@@ -63,17 +63,17 @@ $screenings = db_all(
     $params
 );
 
-/* ---- Group by day so the table can carry a heading row per date ---- */
+
 $byDate = [];
 foreach ($screenings as $s) {
     $byDate[$s['show_date']][] = $s;
 }
 
-/* ---- Dropdown contents --------------------------------------------- */
+
 $films   = db_all("SELECT movie_id, title FROM movies WHERE status = 'now_showing' ORDER BY title");
 $cinemas = db_all('SELECT cinema_id, name, location FROM cinemas ORDER BY name');
 
-/* ---- A few figures for the caption ---------------------------------- */
+
 $totalSeatsLeft = 0;
 foreach ($screenings as $s) {
     $totalSeatsLeft += max(0, (int) $s['total_seats'] - (int) $s['seats_taken']);
@@ -106,7 +106,7 @@ require __DIR__ . '/includes/header.php';
 
 <div class="container">
 
-  <!-- ======================== FILTER BAR ========================= -->
+
   <form class="filter-bar" method="get" action="showtimes.php" data-autosubmit>
 
     <div class="field">
@@ -166,7 +166,7 @@ require __DIR__ . '/includes/header.php';
   </form>
 
 
-  <!-- ========================== TABLE ============================ -->
+
   <?php if (!$screenings): ?>
 
     <div class="empty-state" style="margin-bottom:3rem;">

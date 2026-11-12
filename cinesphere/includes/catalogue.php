@@ -1,11 +1,11 @@
 <?php
-/* Shared by the HTML page and modern search endpoint: one set of query rules. */
+
 function catalogue_input(string $name, string $default = ''): string
 {
     $value = $_GET[$name] ?? $default;
     return is_string($value) ? mb_substr(trim($value), 0, 60) : $default;
 }
-/* ---- Read and sanitise the filters -------------------------------- */
+
 $q = catalogue_input('q', '');
 $genre = catalogue_input('genre', '');
 $rating = catalogue_input('rating', '');
@@ -32,7 +32,7 @@ if (!isset($sortMap[$sort])) {
     $sort = 'score';
 }
 
-/* ---- Build the query ---------------------------------------------- */
+
 $where  = ["m.status <> 'archived'"];
 $params = [];
 
@@ -71,7 +71,7 @@ $sql = 'SELECT m.*,
 $films  = db_all($sql, $params);
 
 
-/* Does the current filter set differ from the default? */
+
 $filtered = ($q !== '' || $genre !== '' || $rating !== ''
              || $status !== 'now_showing' || $sort !== 'score');
 

@@ -1,5 +1,5 @@
 <?php
-/* Loaded by run_tests.php: real HTTP flows and deterministic database races. */
+
 
 function financial_fixture(int $count = 1): array
 {
@@ -72,9 +72,9 @@ tc('TC45', 'F10', 'Approved upgrade and cancellation balance exactly',
                'Paid '.$paid.'; refunded '.(-(float)($refund['amount_change']??0)).'; settlement log '.($move['detail']??'missing')];
    });
 
-/* The trigger pauses the REAL partial-refund function while it holds its locks.
-   A second PHP process then calls the REAL cancellation function. No production
-   code is patched or given test hooks; both processes use the disposable DB. */
+
+
+
 function concurrent_refund_cancel(array $bk, int $seat, ?array $http = null): array
 {
     global $db,$env,$cleanup,$TEST_DB;
@@ -214,8 +214,8 @@ tc('TC51', 'F6, F10', 'Price change while checkout waits is detected after locki
                if(!$waiting) usleep(20000);
            } while(!$waiting && microtime(true)<$until);
            if(!$waiting) throw new RuntimeException('Checkout did not reach the screening lock');
-           /* Same atomic repricing writes as set_showtime_price, controlled here
-              to force the timing. TC40/TC43 exercise the real staff endpoint. */
+
+
            exec_sql('UPDATE showtimes SET base_price=base_price+5 WHERE showtime_id=?',[$st['showtime_id']]);
            exec_sql('UPDATE preference_seats SET seat_price=seat_price+5 WHERE pref_id=?',[$p['pref_id']]);
            exec_sql('UPDATE preferences SET est_total=est_total+5*seat_count WHERE pref_id=?',[$p['pref_id']]);

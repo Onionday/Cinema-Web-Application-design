@@ -1,8 +1,8 @@
 <?php
-/* Local SMTP acknowledgements; external delivery is never requested. */
+
 require_once __DIR__ . '/functions.php';
 
-/** True only when the local SMTP transport accepts the message. */
+
 function send_mail(string $to, string $subject, string $body): bool
 {
     if (!filter_var($to, FILTER_VALIDATE_EMAIL) || preg_match('/[\r\n]/', $subject)) {
@@ -21,10 +21,10 @@ function send_mail(string $to, string $subject, string $body): bool
     return $ok;
 }
 
-/**
- * The acknowledgement the theme asks for: sent once the customer has
- * confirmed their final booking selection.
- */
+
+
+
+
 function send_booking_confirmation(array $booking, array $seats): bool
 {
     $when  = pretty_date($booking['show_date']) . ' at ' . pretty_time($booking['show_time']);
@@ -78,7 +78,7 @@ TXT;
     $ok = send_mail($booking['email'], $subject, $body);
 
     if ($ok) {
-        /* UPDATE - record that the acknowledgement went out */
+
         db_execute('UPDATE bookings SET email_sent = 1 WHERE booking_id = ?',
                    [(int) $booking['booking_id']]);
     }
@@ -86,7 +86,7 @@ TXT;
     return $ok;
 }
 
-/** Acknowledgement for a cancellation. */
+
 function send_cancellation_notice(array $booking, array $seats): bool
 {
     $when = pretty_date($booking['show_date']) . ' at ' . pretty_time($booking['show_time']);
@@ -108,7 +108,7 @@ function send_cancellation_notice(array $booking, array $seats): bool
     );
 }
 
-/** Acknowledgement that a feedback form was received. */
+
 function send_contact_ack(string $name, string $to, string $subject_line, int $ref): bool
 {
     $body = "Hello {$name},\n\n"
@@ -121,11 +121,11 @@ function send_contact_ack(string $name, string $to, string $subject_line, int $r
     return send_mail($to, SITE_NAME . ' - we received your message (#CM' . $ref . ')', $body);
 }
 
-/**
- * Tells the customer that staff changed their booking: some seats
- * refunded, or a seat moved. $amount < 0 is money returned to them,
- * $amount > 0 is an approved simulated supplementary payment.
- */
+
+
+
+
+
 function send_booking_change_notice(array $booking, array $seats, string $what, float $amount): bool
 {
     $when = pretty_date($booking['show_date']) . ' at ' . pretty_time($booking['show_time']);

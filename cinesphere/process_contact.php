@@ -1,12 +1,12 @@
 <?php
-/* =====================================================================
- * process_contact.php
- *
- * Server-side processing for the feedback form: validate, store in
- * contact_messages, acknowledge by email.
- *
- * SQL used: INSERT.
- * ===================================================================== */
+
+
+
+
+
+
+
+
 
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/mailer.php';
@@ -23,7 +23,7 @@ $rating  = (int) ($_POST['rating'] ?? 0);
 $message = trim((string) ($_POST['message'] ?? ''));
 $copyMe  = !empty($_POST['copy_me']);
 
-/* ---- Subject must be one we offer --------------------------------- */
+
 $allowedSubjects = ['Feedback', 'Booking help', 'Technical issue',
                     'Accessibility', 'Lost property', 'Enquiry'];
 
@@ -33,12 +33,12 @@ if ($subject === '') {
     $errors['subject'] = 'Please choose one of the listed subjects.';
 }
 
-/* ---- Rating -------------------------------------------------------- */
+
 if ($rating < 1 || $rating > 5) {
     $errors['rating'] = 'Please choose a rating between 1 and 5.';
 }
 
-/* ---- Message ------------------------------------------------------- */
+
 if ($message === '') {
     $errors['message'] = 'Please tell us what you would like to say.';
 } elseif (mb_strlen($message) < 20) {
@@ -47,7 +47,7 @@ if ($message === '') {
     $errors['message'] = 'Please keep the message to 1200 characters or fewer.';
 }
 
-/* ---- Hand it back if anything is wrong ----------------------------- */
+
 if ($errors) {
     stash_form('contact', $errors, [
         'name'    => $name,
@@ -63,7 +63,7 @@ if ($errors) {
     redirect('contact.php#c-name');
 }
 
-/* ---- Store it ------------------------------------------------------ */
+
 $res = db_execute(
     'INSERT INTO contact_messages (name, email, phone, subject, rating, message)
      VALUES (?, ?, ?, ?, ?, ?)',
@@ -73,7 +73,7 @@ $res = db_execute(
 
 $ref = (int) $res['insert_id'];
 
-/* ---- Acknowledge it ------------------------------------------------ */
+
 send_contact_ack($name, $email, $subject, $ref);
 
 if ($copyMe) {

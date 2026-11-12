@@ -1,13 +1,13 @@
 <?php
-/* =====================================================================
- * remove_preference.php
- *
- * Housekeeping on the short-list: move an entry up, move it down, or
- * delete it. Ownership is checked before anything happens, so one
- * customer can never touch another customer's short-list.
- *
- * SQL used: SELECT, UPDATE, DELETE.
- * ===================================================================== */
+
+
+
+
+
+
+
+
+
 
 require_once __DIR__ . '/includes/auth.php';
 
@@ -23,7 +23,7 @@ if (!in_array($action, ['up', 'down', 'remove'], true)) {
     redirect('preferences.php');
 }
 
-/* ---- The entry must exist AND belong to this customer -------------- */
+
 $pref = db_one(
     'SELECT p.pref_id, p.rank_order, p.user_id, m.title
        FROM preferences p
@@ -38,12 +38,12 @@ if (!$pref) {
     redirect('preferences.php');
 }
 
-/* ------------------------------------------------------------------ */
-/*  Remove                                                             */
-/* ------------------------------------------------------------------ */
+
+
+
 if ($action === 'remove') {
 
-    /* preference_seats rows go with it via ON DELETE CASCADE. */
+
     db_execute('DELETE FROM preferences WHERE pref_id = ? AND user_id = ?',
                [$pref_id, $user_id]);
 
@@ -53,9 +53,9 @@ if ($action === 'remove') {
     redirect('preferences.php');
 }
 
-/* ------------------------------------------------------------------ */
-/*  Move up / down - swap rank_order with the neighbouring entry       */
-/* ------------------------------------------------------------------ */
+
+
+
 $all = db_all(
     'SELECT pref_id, rank_order FROM preferences
       WHERE user_id = ? ORDER BY rank_order, pref_id',
@@ -84,8 +84,8 @@ if ($swapWith < 0 || $swapWith >= count($all)) {
 $a = $all[$index];
 $b = $all[$swapWith];
 
-/* Two UPDATEs inside one transaction so the order can never be left
-   half-swapped if something goes wrong between them. */
+
+
 $conn = db();
 $conn->begin_transaction();
 
@@ -108,10 +108,10 @@ try {
 redirect('preferences.php');
 
 
-/* ------------------------------------------------------------------ */
-/**
- * Closes the gaps after a deletion so the ranks read 1, 2, 3 ... again.
- */
+
+
+
+
 function renumber_preferences(int $user_id): void
 {
     $rows = db_all(

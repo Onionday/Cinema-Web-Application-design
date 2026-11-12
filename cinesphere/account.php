@@ -1,11 +1,11 @@
 <?php
-/* =====================================================================
- * account.php - sign in, register, and edit your details
- *
- * Holds the project's main form: the registration form has seven fields,
- * validated by HTML5 attributes, by js/validate.js and again by PHP in
- * process_register.php before anything is written to the users table.
- * ===================================================================== */
+
+
+
+
+
+
+
 
 require_once __DIR__ . '/includes/auth.php';
 
@@ -19,11 +19,11 @@ if ($tab === 'details' && !$me) {
     $tab = 'login';
 }
 if ($me && $tab !== 'details') {
-    /* Already signed in - there is nothing to log into. */
+
     $tab = 'details';
 }
 
-/* Field errors and previously typed values, carried over a redirect. */
+
 $reg   = take_form('register');
 $log   = take_form('login');
 $det   = take_form('details');
@@ -32,7 +32,7 @@ $regE  = $reg['errors']; $regO = $reg['old'];
 $logE  = $log['errors'];  $logO = $log['old'];
 $detE  = $det['errors'];  $detO = $det['old'];
 
-/* If the visitor was sent here mid-booking, say so. */
+
 $pending = $_SESSION['pending_seats'] ?? null;
 
 $page_title       = $me ? 'My details' : 'Sign in or register';
@@ -84,9 +84,9 @@ require __DIR__ . '/includes/header.php';
   </div>
 
 
-<!-- ==================================================================
-     SIGN IN
-     ================================================================== -->
+
+
+
 <?php if ($tab === 'login'): ?>
 
   <div class="grid grid-2" style="gap:2.5rem;align-items:start;">
@@ -180,9 +180,9 @@ require __DIR__ . '/includes/header.php';
   </div>
 
 
-<!-- ==================================================================
-     REGISTER
-     ================================================================== -->
+
+
+
 <?php elseif ($tab === 'register'): ?>
 
   <div class="grid grid-2" style="gap:2.5rem;align-items:start;">
@@ -325,9 +325,9 @@ require __DIR__ . '/includes/header.php';
   </div>
 
 
-<!-- ==================================================================
-     MY DETAILS (signed in)
-     ================================================================== -->
+
+
+
 <?php else: ?>
 
   <div class="grid grid-2" style="gap:2.5rem;align-items:start;">

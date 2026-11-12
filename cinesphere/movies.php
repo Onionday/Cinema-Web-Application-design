@@ -1,11 +1,11 @@
 <?php
-/* =====================================================================
- * movies.php - browse the catalogue
- *
- * Demonstrates server-side processing of GET input: the keyword, genre,
- * classification, status and sort controls are all validated in PHP and
- * folded into one prepared SELECT.
- * ===================================================================== */
+
+
+
+
+
+
+
 
 require_once __DIR__ . '/includes/auth.php';
 
@@ -35,7 +35,7 @@ require __DIR__ . '/includes/header.php';
 
 <div class="container">
 
-  <!-- ===================== FILTERS (GET form) ==================== -->
+
   <form class="filter-bar" method="get" action="movies.php" id="movie-filters">
 
     <div class="field" style="flex:2 1 260px;">
@@ -88,7 +88,7 @@ require __DIR__ . '/includes/header.php';
   </form>
 
 
-  <!-- ========================= RESULTS =========================== -->
+
   <div class="search-feedback">
     <p id="search-status" role="status" aria-live="polite" aria-atomic="true"></p>
     <button type="button" id="search-retry" class="btn btn-ghost btn-sm" hidden>Retry search</button>

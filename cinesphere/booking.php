@@ -1,12 +1,12 @@
 <?php
-/* =====================================================================
- * booking.php - the seat picker for one screening
- *
- * The hall is drawn from the seats table; which of those seats are gone
- * is worked out from booking_seats joined to confirmed bookings. The
- * visitor's choice is posted to process_preference.php, which re-checks
- * everything before writing to the database.
- * ===================================================================== */
+
+
+
+
+
+
+
+
 
 require_once __DIR__ . '/includes/auth.php';
 
@@ -29,14 +29,14 @@ if (showtime_has_passed($showtime)) {
     redirect('movie.php?id=' . (int) $showtime['movie_id']);
 }
 
-/* ---- Seats -------------------------------------------------------- */
+
 $seats    = get_hall_seats((int) $showtime['hall_id']);
 $taken    = get_taken_seat_ids($showtime_id);
 $held     = is_logged_in()
           ? get_reserved_seat_ids($showtime_id, current_user_id())
           : [];
 
-/* Seats carried over from a failed submit, or from before a sign-in. */
+
 $preselect = [];
 $pending   = $_SESSION['pending_seats'] ?? null;
 if ($pending && (int) $pending['showtime_id'] === $showtime_id) {
@@ -44,7 +44,7 @@ if ($pending && (int) $pending['showtime_id'] === $showtime_id) {
     unset($_SESSION['pending_seats']);
 }
 
-/* ---- Group into rows ---------------------------------------------- */
+
 $rows = [];
 foreach ($seats as $s) {
     $rows[$s['seat_row']][] = $s;
@@ -55,10 +55,10 @@ $totalSeats  = count($seats);
 $seatsLeft   = $totalSeats - count($taken);
 $perRow      = (int) $showtime['seats_per_row'];
 
-/* Where the aisles fall, so the map reads like a real auditorium. */
+
 $aisleAfter = $perRow >= 10 ? [2, $perRow - 2] : [];
 
-/* Distinct surcharges present in this hall, for the price key. */
+
 $tiers = [];
 foreach ($seats as $s) {
     $tiers[$s['seat_type']] = (float) $s['surcharge'];
@@ -103,7 +103,7 @@ require __DIR__ . '/includes/booking_progress.php';
 <section class="section-tight" style="padding-bottom:4rem;">
   <div class="container booking-layout">
 
-    <!-- =================== LEFT: THE AUDITORIUM ================== -->
+
     <div>
       <div class="screen">
         <div class="screen-bar"></div>
@@ -202,7 +202,7 @@ require __DIR__ . '/includes/booking_progress.php';
     </div>
 
 
-    <!-- ==================== RIGHT: THE SUMMARY =================== -->
+
     <aside class="summary-panel">
       <div class="summary-head">
         <img src="images/<?= e($showtime['poster']) ?>"

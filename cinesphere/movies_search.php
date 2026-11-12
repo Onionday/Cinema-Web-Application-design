@@ -1,8 +1,8 @@
 <?php
-/* Additional version only. Read-only catalogue API; card markup is escaped
-   by the same PHP template used for the ordinary no-JavaScript page. */
+
+
 require_once __DIR__ . '/includes/functions.php';
-session_write_close(); // Search requests do not need to hold the session lock.
+session_write_close();
 header('Content-Type: application/json; charset=UTF-8');
 header('Cache-Control: no-store');
 header('X-Content-Type-Options: nosniff');

@@ -1,16 +1,16 @@
 <?php
-/* =====================================================================
- * index.php - home page
- *
- * Server-side generated: the featured film, the "now showing" grid, the
- * headline figures and the next screenings are all read from MySQL on
- * every request, so the page changes as the schedule and the bookings
- * change.
- * ===================================================================== */
+
+
+
+
+
+
+
+
 
 require_once __DIR__ . '/includes/auth.php';
 
-/* -- The featured film: the best-rated title currently on release ---- */
+
 $featured = db_one(
     "SELECT * FROM movies
       WHERE status = 'now_showing'
@@ -18,9 +18,9 @@ $featured = db_one(
       LIMIT 1"
 );
 
-/* -- Everything on release, with a count of upcoming screenings ------ */
+
 $nowShowing = db_all(
-    "SELECT m.*, /*take every column from the movies table*/
+    "SELECT m.*,
             (SELECT COUNT(*)
                FROM showtimes st
               WHERE st.movie_id = m.movie_id
@@ -31,14 +31,14 @@ $nowShowing = db_all(
       ORDER BY m.user_score DESC"
 );
 
-/* -- Coming soon ----------------------------------------------------- */
+
 $comingSoon = db_all(
     "SELECT * FROM movies
       WHERE status = 'coming_soon'
       ORDER BY release_date"
 );
 
-/* -- The next few screenings starting today -------------------------- */
+
 $nextUp = db_all(
     "SELECT v.*
        FROM v_showtime_availability v
@@ -48,7 +48,7 @@ $nextUp = db_all(
       LIMIT 6"
 );
 
-/* -- Headline figures ------------------------------------------------ */
+
 $stats = db_one(
     "SELECT
         (SELECT COUNT(*) FROM movies WHERE status = 'now_showing')  AS films,
@@ -58,7 +58,7 @@ $stats = db_one(
           WHERE TIMESTAMP(show_date, show_time) >= NOW())           AS screenings"
 );
 
-/* -- Venue list for the quick-book bar ------------------------------- */
+
 $cinemas = db_all('SELECT cinema_id, name, location FROM cinemas ORDER BY name');
 
 $page_title       = 'Cinema tickets, without the guesswork';
@@ -69,7 +69,7 @@ $page_description = 'Browse what is showing across three CineSphere venues, '
 require __DIR__ . '/includes/header.php';
 ?>
 
-<!-- ============================ HERO ============================== -->
+
 <section class="hero">
   <div class="hero-bg">
     <img src="images/hero.svg" alt="" width="1600" height="560">
@@ -93,7 +93,7 @@ require __DIR__ . '/includes/header.php';
       </div>
     </div>
 
-    <!-- Showing featured films of the week -->
+
     <?php if ($featured): ?>
     <div class="hero-feature">
       <a class="hero-poster" href="movie.php?id=<?= (int) $featured['movie_id'] ?>">
@@ -122,7 +122,7 @@ require __DIR__ . '/includes/header.php';
 </section>
 
 
-<!-- ====================== QUICK SEARCH BAR ======================== -->
+
 <div class="container">
   <form class="quick-book" method="get" action="showtimes.php" data-autosubmit>
     <div class="field">
@@ -168,7 +168,7 @@ require __DIR__ . '/includes/header.php';
 </div>
 
 
-<!-- ========================= NOW SHOWING ========================== -->
+
 <section class="section">
   <div class="container">
     <div class="section-head">
@@ -205,7 +205,7 @@ require __DIR__ . '/includes/header.php';
 </section>
 
 
-<!-- ========================== NEXT UP ============================= -->
+
 <?php if ($nextUp): ?>
 <section class="section section-sunken">
   <div class="container">
@@ -273,7 +273,7 @@ require __DIR__ . '/includes/header.php';
 <?php endif; ?>
 
 
-<!-- How booking works here -->
+
 <section class="section">
   <div class="container">
     <div class="section-head">
@@ -315,7 +315,7 @@ require __DIR__ . '/includes/header.php';
 </section>
 
 
-<!-- ========================== THE NUMBERS ========================= -->
+
 <section class="section-tight">
   <div class="container">
     <div class="stat-strip">
@@ -328,7 +328,7 @@ require __DIR__ . '/includes/header.php';
 </section>
 
 
-<!-- ========================= COMING SOON ========================== -->
+
 <?php if ($comingSoon): ?>
 <section class="section section-sunken">
   <div class="container">
@@ -362,7 +362,7 @@ require __DIR__ . '/includes/header.php';
 <?php endif; ?>
 
 
-<!-- =========================== VENUES ============================= -->
+
 <section class="section">
   <div class="container">
     <div class="grid grid-2" style="align-items:center;gap:2.5rem;">

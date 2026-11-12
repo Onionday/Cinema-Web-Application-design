@@ -1,12 +1,12 @@
 <?php
-/* =====================================================================
- * confirmation.php - the e-tickets for a completed transaction
- *
- * This page is generated entirely on the server from the bookings just
- * written by process_booking.php. The booking ids arrive through the
- * session, and every one of them is re-checked against the signed-in
- * customer before anything is displayed.
- * ===================================================================== */
+
+
+
+
+
+
+
+
 
 require_once __DIR__ . '/includes/auth.php';
 
@@ -14,7 +14,7 @@ require_login('Sign in to view your booking confirmation.');
 
 $ids = $_SESSION['last_bookings'] ?? [];
 
-/* A single booking can also be opened from "My bookings". */
+
 if (!$ids && isset($_GET['ref'])) {
     $row = db_one(
         'SELECT booking_id FROM bookings WHERE booking_ref = ? AND user_id = ?',
@@ -30,7 +30,7 @@ if (!$ids) {
     redirect('mybookings.php');
 }
 
-/* ---- Load them, discarding anything that is not this customer's ---- */
+
 $bookings = [];
 foreach ($ids as $id) {
     $b = get_booking((int) $id);
@@ -67,7 +67,7 @@ require __DIR__ . '/includes/booking_progress.php';
     <a href="mybookings.php">My bookings</a><span>/</span>Confirmation
   </p>
 
-  <!-- ======================= THE GOOD NEWS ====================== -->
+
   <div class="confirm-banner" style="margin-top:1.5rem;">
     <span class="tick" aria-hidden="true">&check;</span>
     <div>
@@ -94,7 +94,7 @@ require __DIR__ . '/includes/booking_progress.php';
   </div>
 
 
-  <!-- ========================= TICKETS ========================== -->
+
   <?php foreach ($bookings as $b): ?>
     <article class="ticket">
 
@@ -187,7 +187,7 @@ require __DIR__ . '/includes/booking_progress.php';
   <?php endforeach; ?>
 
 
-  <!-- ====================== WHAT HAPPENS NOW ==================== -->
+
   <div class="card card-pad-lg" style="margin-top:2rem;">
     <h2 style="font-size:1.15rem;">Before you go</h2>
     <div class="grid grid-3" style="gap:1.6rem;">
@@ -219,8 +219,8 @@ require __DIR__ . '/includes/booking_progress.php';
 </div>
 
 <?php
-/* Once the tickets have been rendered the ids are cleared, so a refresh
-   does not keep re-announcing a booking that was made minutes ago. */
+
+
 unset($_SESSION['last_bookings']);
 
 require __DIR__ . '/includes/footer.php';

@@ -1,17 +1,17 @@
-/* =====================================================================
- * js/seats.js
- *
- * The interactive seat picker on booking.php.
- *
- * Every seat is a real <button> rendered by PHP, already marked as free,
- * taken or held. This script only toggles the selection, keeps the price
- * summary in step and writes the chosen seat ids into a hidden field that
- * the form posts to process_preference.php.
- *
- * Nothing here decides whether a seat is actually free - the server
- * re-checks that, and the UNIQUE key on booking_seats is the final word.
- * Plain DOM only: no library, no AJAX.
- * ===================================================================== */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 (function () {
     'use strict';
@@ -34,7 +34,7 @@
         var fee      = parseFloat(map.getAttribute('data-fee')) || 0;
         var currency = map.getAttribute('data-currency') || '$';
 
-        /* ordered list of selected seat buttons */
+
         var chosen = [];
 
         function fmt(n) {
@@ -45,9 +45,9 @@
             return btn.getAttribute('data-row') + btn.getAttribute('data-num');
         }
 
-        /** Re-draws the chips, the totals and the submit button. */
+
         function paint() {
-            /* chips */
+
             chosenBox.textContent = '';
 
             if (chosen.length === 0) {
@@ -64,7 +64,7 @@
                 });
             }
 
-            /* money */
+
             var tickets = 0;
             chosen.forEach(function (btn) {
                 tickets += parseFloat(btn.getAttribute('data-price')) || 0;
@@ -79,12 +79,12 @@
             feeOut.textContent     = fmt(fees);
             totalOut.textContent   = fmt(total);
 
-            /* hidden field the form actually posts */
+
             hidden.value = chosen.map(function (btn) {
                 return btn.getAttribute('data-seat');
             }).join(',');
 
-            /* button + hint */
+
             if (chosen.length === 0) {
                 submitBtn.classList.add('is-disabled');
                 submitBtn.setAttribute('aria-disabled', 'true');
@@ -98,7 +98,7 @@
                        : 'You may choose up to ' + maxSeats + ' seats.');
             }
 
-            /* grey out the remaining free seats once the cap is reached */
+
             var free = map.querySelectorAll('.seat:not(:disabled)');
             Array.prototype.forEach.call(free, function (btn) {
                 if (btn.classList.contains('is-selected')) { return; }
@@ -136,7 +136,7 @@
             paint();
         }
 
-        /* One listener on the map rather than one per seat. */
+
         map.addEventListener('click', function (ev) {
             var btn = ev.target.closest('.seat');
             if (btn && map.contains(btn)) {
@@ -182,7 +182,7 @@
             if (target) { target.focus(); }
         });
 
-        /* Clear-all link. */
+
         var clearBtn = document.getElementById('clear-seats');
         if (clearBtn) {
             clearBtn.addEventListener('click', function (ev) {
@@ -191,7 +191,7 @@
             });
         }
 
-        /* Refuse to post an empty selection. */
+
         var form = document.getElementById('seat-form');
         if (form) {
             form.addEventListener('submit', function (ev) {
@@ -203,8 +203,8 @@
             });
         }
 
-        /* Seats the visitor had chosen before a failed submit come back
-           marked data-preselect, so restore them. */
+
+
         Array.prototype.forEach.call(
             map.querySelectorAll('.seat[data-preselect="1"]'),
             function (btn) { toggle(btn); }

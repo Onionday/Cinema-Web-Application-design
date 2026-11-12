@@ -1,5 +1,5 @@
 <?php
-/** $booking_step: 1 seats, 2 short-list, 3 confirmation. */
+
 ?>
 <nav class="container booking-progress" aria-label="Booking progress">
   <ol>

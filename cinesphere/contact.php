@@ -1,11 +1,11 @@
 <?php
-/* =====================================================================
- * contact.php - venues, opening hours and the feedback form
- *
- * The form here is a second full server-side-processed form: six fields,
- * validated in the browser and again in process_contact.php, written to
- * contact_messages and acknowledged by email.
- * ===================================================================== */
+
+
+
+
+
+
+
 
 require_once __DIR__ . '/includes/auth.php';
 
@@ -62,7 +62,7 @@ require __DIR__ . '/includes/header.php';
 
   <div class="grid grid-2" style="gap:2.5rem;align-items:start;">
 
-    <!-- ======================== THE FORM ======================== -->
+
     <div class="card card-pad-lg">
       <h2 style="font-size:1.2rem;">Send us a message</h2>
       <p class="small muted">
@@ -176,7 +176,7 @@ require __DIR__ . '/includes/header.php';
     </div>
 
 
-    <!-- ========================= VENUES ========================= -->
+
     <div>
       <h2 style="font-size:1.2rem;margin-top:0;">Our venues</h2>
 

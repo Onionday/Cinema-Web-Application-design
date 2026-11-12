@@ -1,42 +1,42 @@
 <?php
-/* =====================================================================
- * includes/booking_admin.php
- *
- * Staff-only changes to a customer's booking and to ticket prices,
- * used by admin.php (display) and admin_action.php (writes).
- *
- *   - Refund some seats of a booking (e.g. bought 3, refund 1).
- *   - Cancel and refund a whole booking, with no two-hour cut-off.
- *   - Move a seat to another free seat at the same screening.
- *   - Change a screening's base ticket price.
- *
- * Every change runs in one transaction that locks the screening and the
- * booking first, so it cannot interleave with a customer checking out or
- * cancelling at the same moment. The UNIQUE (showtime_id, seat_id) key on
- * booking_seats still has the final word on double sales.
- *
- * Each booking change is written to booking_adjustments, so staff and
- * the report can see who changed what, when, why and for how much.
- * Payment is simulated, as the project brief allows: amounts are
- * recorded, not sent to a real gateway.
- *
- * SQL used: SELECT, INSERT, UPDATE, DELETE.
- * ===================================================================== */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 require_once __DIR__ . '/functions.php';
 
-/* ------------------------------------------------------------------ */
-/*  Reading                                                            */
-/* ------------------------------------------------------------------ */
 
-/** A booking looked up by its CS reference, or null. */
+
+
+
+
 function find_booking_by_ref(string $ref): ?array
 {
     $row = db_one('SELECT booking_id FROM bookings WHERE booking_ref = ?', [$ref]);
     return $row ? get_booking((int) $row['booking_id']) : null;
 }
 
-/** Free seats in the hall for this screening, for the "move to" list. */
+
 function get_free_seats(int $showtime_id, int $hall_id): array
 {
     $taken = get_taken_seat_ids($showtime_id);
@@ -46,7 +46,7 @@ function get_free_seats(int $showtime_id, int $hall_id): array
     ));
 }
 
-/** The change log for one booking, newest first. */
+
 function get_booking_adjustments(int $booking_id): array
 {
     return db_all(
@@ -59,18 +59,18 @@ function get_booking_adjustments(int $booking_id): array
     );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Validation                                                         */
-/* ------------------------------------------------------------------ */
 
-/** Booking references look like CS1A2B3C26. */
+
+
+
+
 function v_booking_ref(string $raw): string
 {
     $ref = strtoupper(trim($raw));
     return preg_match('/^[A-Z0-9]{4,16}$/', $ref) ? $ref : '';
 }
 
-/** Staff must say why they changed a booking: 5 to 160 characters. */
+
 function v_reason(string $raw, array &$errors, string $field = 'reason'): string
 {
     $reason = trim(preg_replace('/\s+/', ' ', $raw));
@@ -83,14 +83,14 @@ function v_reason(string $raw, array &$errors, string $field = 'reason'): string
     return $reason;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Shared transaction steps                                           */
-/* ------------------------------------------------------------------ */
 
-/**
- * Locks the screening and the booking, and checks the booking can still
- * be changed. Must be called inside a transaction. Returns the booking.
- */
+
+
+
+
+
+
+
 function lock_changeable_booking(int $booking_id): array
 {
     $booking = get_booking($booking_id);
@@ -98,7 +98,7 @@ function lock_changeable_booking(int $booking_id): array
         throw new RuntimeException('That booking no longer exists.');
     }
 
-    /* Same lock order as checkout and cancellation: screening, then booking. */
+
     $screening = db_one('SELECT showtime_id, show_date, show_time FROM showtimes WHERE showtime_id = ? FOR UPDATE',
                         [(int) $booking['showtime_id']]);
     $fresh = db_one('SELECT * FROM bookings WHERE booking_id = ? FOR UPDATE',
@@ -108,7 +108,7 @@ function lock_changeable_booking(int $booking_id): array
         throw new RuntimeException('Only confirmed bookings can be changed. This one is '
                                  . ($fresh['booking_status'] ?? 'missing') . '.');
     }
-    /* Locking reads see committed changes even under REPEATABLE READ. */
+
     $booking = array_replace($booking, $fresh, $screening);
     if (showtime_has_passed($booking)) {
         throw new RuntimeException('This screening has already started, so the booking can no longer be changed.');
@@ -119,7 +119,7 @@ function lock_changeable_booking(int $booking_id): array
 function log_adjustment(int $booking_id, int $staff_id, string $action,
                         string $detail, float $amount, string $reason): void
 {
-    /* INSERT - one row per change, kept even after a later cancellation */
+
     db_execute(
         'INSERT INTO booking_adjustments
                 (booking_id, staff_id, action, detail, amount_change, reason)
@@ -129,11 +129,11 @@ function log_adjustment(int $booking_id, int $staff_id, string $action,
     );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Booking changes                                                    */
-/* ------------------------------------------------------------------ */
 
-/** Caller already holds screening/booking/seat locks in a transaction. */
+
+
+
+
 function cancel_locked_booking(array $booking, array $seats, string $reason, int $staff_id): array
 {
     $booking_id = (int)$booking['booking_id'];
@@ -150,7 +150,7 @@ function cancel_locked_booking(array $booking, array $seats, string $reason, int
             'booking'=>$booking, 'seat_rows'=>$seats];
 }
 
-/** Cancel using the current locked amount; retain the exact notification snapshot. */
+
 function staff_cancel_booking(int $booking_id, string $reason, int $staff_id, ?array &$notice = null): float
 {
     $conn = db();
@@ -167,12 +167,12 @@ function staff_cancel_booking(int $booking_id, string $reason, int $staff_id, ?a
     }
 }
 
-/**
- * Refunds some of a booking's seats. Refunding every seat is the same
- * as cancelling the booking, using the same already-locked transaction.
- *
- * @return array{refund: float, seats: string, cancelled: bool}
- */
+
+
+
+
+
+
 function staff_refund_seats(int $booking_id, array $seat_ids, string $reason, int $staff_id): array
 {
     $seat_ids = array_values(array_unique(array_map('intval', $seat_ids)));
@@ -197,14 +197,14 @@ function staff_refund_seats(int $booking_id, array $seat_ids, string $reason, in
             }
             $chosen[] = $byId[$id];
         }
-        /* Validate the exact set under the locks before deciding to cancel all. */
+
         if (count($chosen) === count($held)) {
             $result = cancel_locked_booking($booking, $held, $reason, $staff_id);
             $conn->commit();
             return $result;
         }
 
-        /* Each refunded seat returns its own price plus its booking fee. */
+
         $refund = 0.0;
         foreach ($chosen as $s) {
             $refund += (float) $s['seat_price'] + BOOKING_FEE;
@@ -213,19 +213,19 @@ function staff_refund_seats(int $booking_id, array $seat_ids, string $reason, in
 
         $marks = implode(',', array_fill(0, count($seat_ids), '?'));
 
-        /* DELETE - seats go back on sale and leave the e-ticket */
+
         db_execute("DELETE FROM booking_seats WHERE booking_id = ? AND seat_id IN ($marks)",
                    array_merge([$booking_id], $seat_ids));
         db_execute("DELETE FROM booking_seat_history WHERE booking_id = ? AND seat_id IN ($marks)",
                    array_merge([$booking_id], $seat_ids));
 
-        /* UPDATE - fewer seats, smaller total */
+
         db_execute('UPDATE bookings
                        SET seat_count = seat_count - ?, total_amount = total_amount - ?
                      WHERE booking_id = ?',
                    [count($chosen), $refund, $booking_id], 'idi');
 
-        archive_booking_seats($booking_id);   // history mirrors the seats still held
+        archive_booking_seats($booking_id);
 
         $text = seat_list_text($chosen);
         log_adjustment($booking_id, $staff_id, 'seat_refund',
@@ -243,13 +243,13 @@ function staff_refund_seats(int $booking_id, array $seat_ids, string $reason, in
     }
 }
 
-/**
- * Moves one seat of a booking to another free seat at the same screening.
- * The customer keeps the price they paid; only the difference in seat
- * type surcharge (Standard, Premium, Couch) is added or refunded.
- *
- * @return array{from: string, to: string, difference: float}
- */
+
+
+
+
+
+
+
 function staff_move_seat(int $booking_id, int $from_seat, int $to_seat,
                          string $reason, int $staff_id, string $upgrade_payment = ''): array
 {
@@ -289,20 +289,20 @@ function staff_move_seat(int $booking_id, int $from_seat, int $to_seat,
         $newPrice   = round((float) $from['seat_price'] - (float) $from['surcharge']
                             + (float) $to['surcharge'], 2);
         $difference = round($newPrice - (float) $from['seat_price'], 2);
-        /* As with checkout, payment is simulated. An upgrade is never put on credit. */
+
         if ($difference > 0 && $upgrade_payment !== 'success') {
             throw new RuntimeException($upgrade_payment === 'declined'
                 ? 'The additional payment was declined. The seat and booking are unchanged.'
                 : 'Approve the simulated additional payment before upgrading this seat. Nothing was changed.');
         }
 
-        /* UPDATE - the UNIQUE (showtime_id, seat_id) key refuses a seat
-           someone else bought a moment ago, and the transaction rolls back. */
+
+
         db_execute('UPDATE booking_seats SET seat_id = ?, seat_price = ?
                      WHERE booking_id = ? AND seat_id = ?',
                    [$to_seat, $newPrice, $booking_id, $from_seat], 'idii');
 
-        /* The e-ticket reads seat history, so swap the seat there too. */
+
         db_execute('DELETE FROM booking_seat_history WHERE booking_id = ? AND seat_id = ?',
                    [$booking_id, $from_seat]);
         archive_booking_seats($booking_id);
@@ -329,17 +329,17 @@ function staff_move_seat(int $booking_id, int $from_seat, int $to_seat,
     }
 }
 
-/* ------------------------------------------------------------------ */
-/*  Ticket price                                                       */
-/* ------------------------------------------------------------------ */
 
-/**
- * Changes a screening's base price. Confirmed bookings keep the price
- * that was paid. Short-list entries for this screening are re-priced so
- * the customer is shown, and charged, the new price at checkout.
- *
- * @return array{old: float, new: float, repriced: int}
- */
+
+
+
+
+
+
+
+
+
+
 function set_showtime_price(int $showtime_id, float $price): array
 {
     $conn = db();
@@ -357,14 +357,14 @@ function set_showtime_price(int $showtime_id, float $price): array
             throw new RuntimeException('That screening has already started.');
         }
 
-        /* UPDATE - the price new bookings will pay */
+
         db_execute('UPDATE showtimes SET base_price = ? WHERE showtime_id = ?',
                    [$price, $showtime_id], 'di');
 
-        /* Weekend surcharge still applies on top of the new base price. */
+
         $effective = showtime_price(['base_price' => $price, 'show_date' => $st['show_date']]);
 
-        /* UPDATE - re-price every short-listed seat for this screening */
+
         db_execute('UPDATE preference_seats ps
                       JOIN preferences p ON p.pref_id = ps.pref_id
                       JOIN seats s       ON s.seat_id = ps.seat_id
@@ -372,7 +372,7 @@ function set_showtime_price(int $showtime_id, float $price): array
                      WHERE p.showtime_id = ?',
                    [$effective, $showtime_id], 'di');
 
-        /* UPDATE - and the short-list totals, fee included */
+
         $res = db_execute('UPDATE preferences p
                               SET p.est_total = (SELECT COALESCE(SUM(ps.seat_price), 0)
                                                         + ? * COUNT(ps.pref_seat_id)

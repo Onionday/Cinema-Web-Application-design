@@ -1,17 +1,17 @@
--- =====================================================================
---  CineSphere - Cinema Ticket Booking Portal
---  File: 02_seed.sql   (sample data)
---  Run AFTER 01_schema.sql
---
---  Show dates are generated relative to CURDATE() so the schedule is
---  always "this week" no matter when the database is imported.
--- =====================================================================
+
+
+
+
+
+
+
+
 USE cinesphere;
 
--- Cleared with DELETE (not TRUNCATE) in child-to-parent order, so this
--- works even when the SQL client runs each statement in its own session
--- and does not carry SET FOREIGN_KEY_CHECKS across statements (as some
--- phpMyAdmin "Import" runs do) - DELETE has no such restriction.
+
+
+
+
 DELETE FROM booking_seats;
 DELETE FROM bookings;
 DELETE FROM preference_seats;
@@ -24,8 +24,8 @@ DELETE FROM cinemas;
 DELETE FROM movies;
 DELETE FROM users;
 
--- Reset the auto-increment counters so seeded IDs start clean each time
--- this file is re-run (DELETE, unlike TRUNCATE, does not do this itself).
+
+
 ALTER TABLE booking_seats AUTO_INCREMENT = 1;
 ALTER TABLE bookings AUTO_INCREMENT = 1;
 ALTER TABLE preference_seats AUTO_INCREMENT = 1;
@@ -39,27 +39,27 @@ ALTER TABLE movies AUTO_INCREMENT = 1;
 ALTER TABLE users AUTO_INCREMENT = 1;
 
 
--- ------------------------------------------------------------------
--- Users.  Demo passwords:  admin@cinesphere.sg / Admin@123
---                          demo@cinesphere.sg  / Demo@123
---                          siti@cinesphere.sg  / Demo@123
--- ------------------------------------------------------------------
+
+
+
+
+
 INSERT INTO users (user_id, full_name, email, phone, password_hash, birth_date, role) VALUES
   (1, 'Site Administrator', 'admin@cinesphere.sg', '+65 6100 2000', '$2y$12$bFbJ9qK/B8PMOjoKh5plM.GJp9.ZaQ4/FTbk.xzbNiUN916g.EMT6', '1990-01-15', 'admin'),
   (2, 'Demo Customer', 'demo@cinesphere.sg', '+65 9123 4567', '$2y$12$cWFPKvgQhtNPBKO1ZsJnk.4QArq9TZQtgPJYLp5bCtZEc/wmjdSBS', '1999-06-02', 'customer'),
   (3, 'Siti Rahman', 'siti@cinesphere.sg', '+65 9876 5432', '$2y$12$WadjpLuN/uRNmujwW7e.J.oLYWSZqHNv8OhGiCWT8mn7WenkR.e2a', '1997-11-20', 'customer');
 
--- ------------------------------------------------------------------
--- Cinemas
--- ------------------------------------------------------------------
+
+
+
 INSERT INTO cinemas (cinema_id, name, location, address, phone) VALUES
   (1, 'CineSphere Orchard', 'Orchard', '391 Orchard Road, #05-12 Sky Atrium, Singapore 238873', '+65 6100 2001'),
   (2, 'CineSphere Jewel', 'Changi', '78 Airport Boulevard, #04-208 Jewel, Singapore 819666', '+65 6100 2002'),
   (3, 'CineSphere Harbourfront', 'HarbourFront', '1 Maritime Square, #03-31 Bayview Mall, Singapore 099253', '+65 6100 2003');
 
--- ------------------------------------------------------------------
--- Halls
--- ------------------------------------------------------------------
+
+
+
 INSERT INTO halls (hall_id, cinema_id, hall_name, hall_type, row_count, seats_per_row) VALUES
   (1, 1, 'Orchard Hall 1', 'Standard', 8, 12),
   (2, 1, 'Orchard IMAX', 'IMAX', 10, 14),
@@ -68,10 +68,10 @@ INSERT INTO halls (hall_id, cinema_id, hall_name, hall_type, row_count, seats_pe
   (5, 3, 'Harbour Hall 1', 'Standard', 8, 12),
   (6, 3, 'Harbour Premiere', 'Premium', 6, 10);
 
--- ------------------------------------------------------------------
--- Seats.  Front rows are Standard; the rear two rows of every hall are
--- Premium; Premium halls finish with a row of two-seat Couches.
--- ------------------------------------------------------------------
+
+
+
+
 INSERT INTO seats (seat_id, hall_id, seat_row, seat_number, seat_type, surcharge) VALUES
   (1, 1, 'A', 1, 'Standard', 0.00),
   (2, 1, 'A', 2, 'Standard', 0.00),
@@ -622,9 +622,9 @@ INSERT INTO seats (seat_id, hall_id, seat_row, seat_number, seat_type, surcharge
   (547, 6, 'F', 9, 'Couch', 9.00),
   (548, 6, 'F', 10, 'Couch', 9.00);
 
--- ------------------------------------------------------------------
--- Movies (all titles, artwork and credits are original to this project)
--- ------------------------------------------------------------------
+
+
+
 INSERT INTO movies (movie_id, title, tagline, synopsis, genre, language, duration_min,
                     classification, director, cast_list, release_date, poster, banner,
                     user_score, status) VALUES
@@ -637,9 +637,9 @@ INSERT INTO movies (movie_id, title, tagline, synopsis, genre, language, duratio
   (7, 'The Glass Cartographer', 'She drew the coast. The coast moved to match.', 'In a city where maps are blown from glass, an apprentice discovers that her mistakes are rewriting the streets outside. An ornate, hand-built fantasy adventure about the responsibility of description.', 'Fantasy, Adventure', 'English', 137, 'PG13', 'Ines Valdivia', 'Clara Boateng, Rui Nakamura, Theo Almeida', '2026-11-06', 'cartographer.svg', 'cartographer-banner.svg', 0.0, 'coming_soon'),
   (8, 'Night Shift at the Aquarium', 'Closing time is when the real work starts.', 'Every night after the last visitor leaves, a hand-drawn octopus named Bartholomew runs the aquarium''s lost property office. Tonight someone has handed in a child''s drawing of the sea, and nobody has come to claim it.', 'Animation, Family', 'English', 94, 'G', 'Sofia Lindqvist', 'Voices of Rina Abe, Gideon Park, Marta Silva', '2026-12-12', 'aquarium.svg', 'aquarium-banner.svg', 0.0, 'coming_soon');
 
--- ------------------------------------------------------------------
--- Showtimes: 7 days x 6 halls x 5 slots
--- ------------------------------------------------------------------
+
+
+
 INSERT INTO showtimes (showtime_id, movie_id, hall_id, show_date, show_time, format, base_price) VALUES
   (1, 1, 1, DATE_ADD(CURDATE(), INTERVAL 0 DAY), '11:00:00', '2D', 9.50),
   (2, 2, 1, DATE_ADD(CURDATE(), INTERVAL 0 DAY), '14:15:00', '2D', 11.00),
@@ -852,14 +852,12 @@ INSERT INTO showtimes (showtime_id, movie_id, hall_id, show_date, show_time, for
   (209, 5, 6, DATE_ADD(CURDATE(), INTERVAL 6 DAY), '19:45:00', '2D', 20.50),
   (210, 6, 6, DATE_ADD(CURDATE(), INTERVAL 6 DAY), '22:30:00', '2D', 18.00);
 
--- Bookings start empty. Seats are occupied only by bookings made through the site.
 
--- ------------------------------------------------------------------
--- Sample feedback messages (seen on the admin page)
--- ------------------------------------------------------------------
+
+
+
+
 INSERT INTO contact_messages (name, email, phone, subject, rating, message, msg_status, submitted_at) VALUES
   ('Wei Jun Ong', 'weijun@example.sg', '+65 9001 2233', 'Feedback', 5, 'The reclining seats in Jewel Premiere are excellent. Please put the same ones in Orchard Hall 1.', 'new', DATE_SUB(NOW(), INTERVAL 1 DAY)),
   ('Farah Iskandar', 'farah@example.sg', '+65 9002 3344', 'Technical issue', 3, 'The seat map did not clear my selection after I removed a preference. Refreshing fixed it.', 'read', DATE_SUB(NOW(), INTERVAL 2 DAY)),
   ('Kumar Selvam', 'kumar@example.sg', '+65 9003 4455', 'Enquiry', 4, 'Do you offer a student concession on weekday afternoon screenings? Nothing on the site mentions it.', 'resolved', DATE_SUB(NOW(), INTERVAL 3 DAY));
-
--- End of seed data.

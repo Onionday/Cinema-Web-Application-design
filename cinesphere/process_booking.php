@@ -1,18 +1,18 @@
 <?php
-/* =====================================================================
- * process_booking.php
- *
- * The final selection step. Takes the entries the customer ticked on
- * preferences.php, re-checks each one against the live database, asks
- * the (simulated) payment gateway for an answer, and on approval turns
- * each surviving entry into a real booking.
- *
- * Each booking is written inside its own transaction, so if the very
- * last seat of one entry is sold a fraction of a second earlier, only
- * that entry fails - the customer's other confirmed bookings stand.
- *
- * SQL used: SELECT, INSERT, UPDATE, DELETE.
- * ===================================================================== */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/mailer.php';
@@ -24,7 +24,7 @@ require_login();
 $user_id = current_user_id();
 $me      = current_user();
 
-/* ---- What did they tick? ------------------------------------------ */
+
 $picked = $_POST['confirm'] ?? [];
 if (!is_array($picked)) {
     $picked = [];
@@ -54,7 +54,7 @@ if ($quote === null) {
     redirect('preferences.php');
 }
 
-/* ---- Re-read every ticked entry, in the customer's own ranking ----- */
+
 $placeholders = implode(',', array_fill(0, count($picked), '?'));
 
 $rows = db_all(
@@ -71,8 +71,8 @@ if (!$rows) {
 
 $ordered = array_map(static fn($r) => (int) $r['pref_id'], $rows);
 
-/* Build the full picture for each, using the same availability logic
-   the short-list page displayed. */
+
+
 $all = get_preferences($user_id);
 $byId = [];
 foreach ($all as $p) {
@@ -94,7 +94,7 @@ foreach ($ordered as $pid) {
     }
 }
 
-/* Reject a changed quote before processing any selected booking. */
+
 foreach ($toBook as $p) {
     if (!checkout_quote_matches($quote, $p)) {
         flash('warning', 'A price or seat selection has changed. Nothing was booked. Review the current prices and confirm again.');
@@ -113,21 +113,21 @@ foreach ($toBook as $p) {
     $grandTotal += (float) $p['est_total'];
 }
 
-/* =====================================================================
- *  The payment gateway
- *
- *  A real build would redirect to the provider here and come back to a
- *  callback URL. The project brief says payment is assumed to be handled
- *  by a third party and the redirection need not be implemented, so this
- *  stands in for it - what matters is that both answers are handled.
- * ================================================================== */
+
+
+
+
+
+
+
+
 $authCode = strtoupper(bin2hex(random_bytes(4)));
 
 if ($gateway === 'declined') {
 
-    /* Log the failed attempt against each entry so it is auditable, but
-       do not touch booking_seats: no seat is ever held by a failed
-       payment, and nothing leaves the short-list. */
+
+
+
     foreach ($toBook as $p) {
         db_execute(
             'INSERT INTO bookings
@@ -149,9 +149,9 @@ if ($gateway === 'declined') {
     redirect('preferences.php');
 }
 
-/* =====================================================================
- *  Payment approved - turn each entry into a booking
- * ================================================================== */
+
+
+
 $conn      = db();
 $confirmed = [];
 $lost      = [];
@@ -173,10 +173,10 @@ foreach ($toBook as $p) {
             $priceChanged = true;
             throw new RuntimeException('The price changed during checkout. Review it and confirm again.');
         }
-        /* Use the locked seats and amount, not the pretransaction snapshot. */
+
         $p = array_replace($p, $choice);
 
-        /* Last-moment re-check inside the transaction. */
+
         $taken = get_taken_seat_ids((int) $p['showtime_id']);
         $clash = [];
         foreach ($p['seats'] as $s) {
@@ -188,7 +188,7 @@ foreach ($toBook as $p) {
             throw new RuntimeException('Seats ' . implode(', ', $clash) . ' were just taken.');
         }
 
-        /* INSERT - the booking itself */
+
         $ref = make_booking_ref();
 
         $res = db_execute(
@@ -204,10 +204,10 @@ foreach ($toBook as $p) {
 
         $booking_id = (int) $res['insert_id'];
 
-        /* INSERT - the seats. The UNIQUE key on (showtime_id, seat_id)
-           is the real guard against a double sale: if another customer
-           committed the same seat a moment ago this throws, and the
-           whole booking rolls back. */
+
+
+
+
         foreach ($p['seats'] as $s) {
             db_execute(
                 'INSERT INTO booking_seats (booking_id, showtime_id, seat_id, seat_price)
@@ -220,8 +220,8 @@ foreach ($toBook as $p) {
 
         archive_booking_seats($booking_id);
 
-        /* DELETE - the entry has become a booking, so it leaves the
-           short-list. */
+
+
         db_execute('DELETE FROM preferences WHERE pref_id = ? AND user_id = ?',
                    [(int) $p['pref_id'], $user_id]);
 
@@ -238,7 +238,7 @@ foreach ($toBook as $p) {
     }
 }
 
-/* ---- Tidy the ranking that is left --------------------------------- */
+
 $left = db_all('SELECT pref_id FROM preferences WHERE user_id = ? ORDER BY rank_order, pref_id',
                [$user_id]);
 $n = 1;
@@ -247,7 +247,7 @@ foreach ($left as $r) {
                [$n++, (int) $r['pref_id']]);
 }
 
-/* ---- Email the acknowledgement for each confirmed booking ---------- */
+
 $mailed = 0;
 foreach ($confirmed as $bid) {
     $booking = get_booking($bid);
@@ -256,7 +256,7 @@ foreach ($confirmed as $bid) {
     }
 }
 
-/* ---- Report back --------------------------------------------------- */
+
 if ($priceChanged) {
     flash('warning', 'A price changed during checkout. Those selections were not booked or charged. Review the current prices and confirm them again.');
 }
@@ -291,8 +291,8 @@ if ($mailed > 0) {
                    . 'at the box office.');
 }
 
-/* Hand the ids to the confirmation page through the session rather than
-   the URL, so a reference cannot be guessed by editing the address bar. */
+
+
 $_SESSION['last_bookings'] = $confirmed;
 
 redirect('confirmation.php');

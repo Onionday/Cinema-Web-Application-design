@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/functions.php';
 
-/** Serialize schedule changes for a hall. Must be inside a transaction. */
+
 function lock_hall(int $hallId): void
 {
     if (!db_one('SELECT hall_id FROM halls WHERE hall_id = ? FOR UPDATE', [$hallId])) {
@@ -9,7 +9,7 @@ function lock_hall(int $hallId): void
     }
 }
 
-/** Compare full date-time intervals, including the 20-minute turnaround. */
+
 function screening_conflict(int $hallId, string $date, string $time, int $duration, int $exclude = 0): ?array
 {
     $start = $date . ' ' . $time;

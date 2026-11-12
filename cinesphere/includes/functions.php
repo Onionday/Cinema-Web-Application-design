@@ -1,45 +1,45 @@
 <?php
-/* =====================================================================
- * includes/functions.php
- *
- * Shared helpers: output escaping, CSRF protection, flash messages,
- * validation routines, pricing arithmetic and the seat-availability
- * queries that several pages need.
- * ===================================================================== */
+
+
+
+
+
+
+
 
 require_once __DIR__ . '/db.php';
 
-/* ------------------------------------------------------------------ */
-/*  Output                                                             */
-/* ------------------------------------------------------------------ */
 
-/** Escape for HTML output. Used on every single echoed variable. */
+
+
+
+
 function e($value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
-/** S$12.50 */
+
 function money($amount): string
 {
     return CURRENCY . number_format((float) $amount, 2);
 }
 
-/** 2026-09-21 -> Sun, 21 Sep 2026 */
+
 function pretty_date(string $ymd): string
 {
     $ts = strtotime($ymd);
     return $ts ? date('D, j M Y', $ts) : $ymd;
 }
 
-/** 19:45:00 -> 7:45 PM */
+
 function pretty_time(string $hms): string
 {
     $ts = strtotime($hms);
     return $ts ? date('g:i A', $ts) : $hms;
 }
 
-/** 141 -> 2h 21m */
+
 function pretty_runtime(int $minutes): string
 {
     $h = intdiv($minutes, 60);
@@ -47,15 +47,15 @@ function pretty_runtime(int $minutes): string
     return $h > 0 ? "{$h}h {$m}m" : "{$m}m";
 }
 
-/** A5 */
+
 function seat_label(array $seat): string
 {
     return $seat['seat_row'] . $seat['seat_number'];
 }
 
-/* ------------------------------------------------------------------ */
-/*  Navigation / redirects                                             */
-/* ------------------------------------------------------------------ */
+
+
+
 
 function redirect(string $to): void
 {
@@ -63,9 +63,9 @@ function redirect(string $to): void
     exit;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Flash messages                                                     */
-/* ------------------------------------------------------------------ */
+
+
+
 
 function flash(string $type, string $message): void
 {
@@ -79,9 +79,9 @@ function take_flashes(): array
     return $f;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Form state carried across a redirect (old input + field errors)    */
-/* ------------------------------------------------------------------ */
+
+
+
 
 function stash_form(string $key, array $errors, array $old): void
 {
@@ -95,9 +95,9 @@ function take_form(string $key): array
     return $f;
 }
 
-/* ------------------------------------------------------------------ */
-/*  CSRF                                                               */
-/* ------------------------------------------------------------------ */
+
+
+
 
 function csrf_token(): string
 {
@@ -112,13 +112,13 @@ function csrf_field(): string
     return '<input type="hidden" name="csrf" value="' . e(csrf_token()) . '">';
 }
 
-/** Aborts the request if the posted token does not match the session. */
+
 function csrf_check(): void
 {
     $posted = $_POST['csrf'] ?? '';
     $token  = (string) ($_SESSION['csrf'] ?? '');
-    /* An empty token must never match: a visitor with no session token
-       who posts no token would otherwise pass ('' equals ''). */
+
+
     if (!is_string($posted) || $posted === '' || $token === '' || !hash_equals($token, $posted)) {
         http_response_code(400);
         flash('error', 'Your session expired before the form was submitted. Please try again.');
@@ -126,7 +126,7 @@ function csrf_check(): void
     }
 }
 
-/** Every handler starts with this: POST only, valid token. */
+
 function require_post(): void
 {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -135,13 +135,13 @@ function require_post(): void
     csrf_check();
 }
 
-/* ------------------------------------------------------------------ */
-/*  Server-side validation                                             */
-/*                                                                     */
-/*  These mirror the HTML5 attributes and the JavaScript in            */
-/*  js/validate.js. Client-side checks are a convenience; these are    */
-/*  the ones that actually decide whether data reaches the database.   */
-/* ------------------------------------------------------------------ */
+
+
+
+
+
+
+
 
 function v_text(string $raw): string
 {
@@ -186,10 +186,10 @@ function v_phone(string $raw, array &$errors, string $field = 'phone'): string
     return $val;
 }
 
-/**
- * Password policy, enforced identically in js/validate.js:
- * 8-64 characters, at least one letter, one digit and one symbol.
- */
+
+
+
+
 function v_password(string $raw, array &$errors, string $field = 'password'): string
 {
     if ($raw === '') {
@@ -204,12 +204,12 @@ function v_password(string $raw, array &$errors, string $field = 'password'): st
     return $raw;
 }
 
-/** Customers must be 13 or older to hold an account. */
+
 function v_birthdate(string $raw, array &$errors, string $field = 'birth_date'): ?string
 {
     $val = trim($raw);
     if ($val === '') {
-        return null;                       // optional field
+        return null;
     }
     $d = DateTime::createFromFormat('Y-m-d', $val);
     if (!$d || $d->format('Y-m-d') !== $val) {
@@ -225,32 +225,32 @@ function v_birthdate(string $raw, array &$errors, string $field = 'birth_date'):
     return $val;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Pricing                                                            */
-/* ------------------------------------------------------------------ */
 
-/** Weekend screenings carry a surcharge on top of the stored base price. */
+
+
+
+
 function showtime_price(array $showtime): float
 {
     $price = (float) $showtime['base_price'];
-    $dow   = (int) date('N', strtotime($showtime['show_date']));   // 6 = Sat
+    $dow   = (int) date('N', strtotime($showtime['show_date']));
     if ($dow >= 6) {
         $price += WEEKEND_SURCHARGE;
     }
     return round($price, 2);
 }
 
-/** Price of one specific seat at one specific screening. */
+
 function seat_price(array $showtime, array $seat): float
 {
     return round(showtime_price($showtime) + (float) $seat['surcharge'], 2);
 }
 
-/* ------------------------------------------------------------------ */
-/*  Screenings and seats                                               */
-/* ------------------------------------------------------------------ */
 
-/** Full detail for one screening, or null if it does not exist. */
+
+
+
+
 function get_showtime(int $showtime_id): ?array
 {
     return db_one(
@@ -268,13 +268,13 @@ function get_showtime(int $showtime_id): ?array
     );
 }
 
-/** Has this screening already started? */
+
 function showtime_has_passed(array $showtime): bool
 {
     return strtotime($showtime['show_date'] . ' ' . $showtime['show_time']) < time();
 }
 
-/** Every seat in the hall, in row / number order. */
+
 function get_hall_seats(int $hall_id): array
 {
     return db_all(
@@ -286,10 +286,10 @@ function get_hall_seats(int $hall_id): array
     );
 }
 
-/**
- * seat_id => booking_ref for every seat already sold at this screening.
- * Only confirmed bookings hold a seat; cancelling releases it.
- */
+
+
+
+
 function get_taken_seat_ids(int $showtime_id): array
 {
     $rows = db_all(
@@ -308,7 +308,7 @@ function get_taken_seat_ids(int $showtime_id): array
     return $out;
 }
 
-/** Seats the signed-in customer is already holding on their short-list. */
+
 function get_reserved_seat_ids(int $showtime_id, int $user_id): array
 {
     $rows = db_all(
@@ -322,7 +322,7 @@ function get_reserved_seat_ids(int $showtime_id, int $user_id): array
     return array_map(static fn($r) => (int) $r['seat_id'], $rows);
 }
 
-/** How many seats are still free at a screening. */
+
 function seats_remaining(int $showtime_id, int $hall_id): int
 {
     $total = (int) (db_one(
@@ -333,7 +333,7 @@ function seats_remaining(int $showtime_id, int $hall_id): int
     return max(0, $total - count(get_taken_seat_ids($showtime_id)));
 }
 
-/** "Selling fast" / "Plenty left" badge wording for the schedule table. */
+
 function availability_label(int $remaining, int $total): array
 {
     if ($remaining === 0) {
@@ -349,11 +349,11 @@ function availability_label(int $remaining, int $total): array
     return ['Good availability', 'good'];
 }
 
-/* ------------------------------------------------------------------ */
-/*  Short-list (preferences)                                           */
-/* ------------------------------------------------------------------ */
 
-/** Number of entries the customer currently holds. */
+
+
+
+
 function preference_count(int $user_id): int
 {
     return (int) (db_one(
@@ -362,10 +362,10 @@ function preference_count(int $user_id): int
     )['n'] ?? 0);
 }
 
-/**
- * The customer's short-list in preference order, each entry carrying its
- * screening details, its seats, and whether those seats are all still free.
- */
+
+
+
+
 function get_preferences(int $user_id): array
 {
     $prefs = db_all(
@@ -411,11 +411,11 @@ function get_preferences(int $user_id): array
     return $prefs;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Bookings                                                           */
-/* ------------------------------------------------------------------ */
 
-/** CS-prefixed reference that is guaranteed unique in the bookings table. */
+
+
+
+
 function make_booking_ref(): string
 {
     do {
@@ -426,7 +426,7 @@ function make_booking_ref(): string
     return $ref;
 }
 
-/** One booking with its screening, or null. */
+
 function get_booking(int $booking_id): ?array
 {
     return db_one(
@@ -447,7 +447,7 @@ function get_booking(int $booking_id): ?array
     );
 }
 
-/** Seats a booking holds right now, with each seat's type surcharge. */
+
 function get_held_seats(int $booking_id, bool $lock = false): array
 {
     return db_all(
@@ -462,7 +462,7 @@ function get_held_seats(int $booking_id, bool $lock = false): array
 }
 
 
-/** The seats attached to one booking. */
+
 function archive_booking_seats(int $booking_id): void
 {
     db_execute(
@@ -490,7 +490,7 @@ function get_booking_seats(int $booking_id): array
     );
 }
 
-/** "A5, A6, A7" */
+
 function seat_list_text(array $seats): string
 {
     return implode(', ', array_map(
@@ -499,17 +499,17 @@ function seat_list_text(array $seats): string
     ));
 }
 
-/* ------------------------------------------------------------------ */
-/*  Misc                                                               */
-/* ------------------------------------------------------------------ */
 
-/** Marks the current page in the navigation bar. */
+
+
+
+
 function nav_active(string $file): string
 {
     return basename($_SERVER['SCRIPT_NAME']) === $file ? ' class="active"' : '';
 }
 
-/** The list of distinct genres, for the filter on movies.php. */
+
 function all_genres(): array
 {
     $rows  = db_all("SELECT DISTINCT genre FROM movies WHERE status <> 'archived'");

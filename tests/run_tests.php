@@ -1,34 +1,34 @@
 <?php
-/* =====================================================================
- * tests/run_tests.php - CineSphere automated test suite
- *
- * Run from the project folder (the one that contains cinesphere/):
- *
- *     Windows / XAMPP:  C:\xampp\php\php.exe tests\run_tests.php
- *     Linux / macOS:    php tests/run_tests.php
- *
- * What it does
- *   1. Creates a throw-away database (cinesphere_test_xxxxxxxx) and loads
- *      sql/01_schema.sql and sql/02_seed.sql into it. Your real
- *      `cinesphere` database is never read or changed.
- *   2. Starts PHP's built-in web server on a free port, pointed at this
- *      project and at the test database, plus a mail catcher so no email
- *      leaves the machine.
- *   3. Drives the site the way a browser would (GET pages, POST forms with
- *      the CSRF token, follow redirects, keep the session cookie) and
- *      checks both the page shown and the rows in the database.
- *   4. Prints a summary, writes tests/test-results.md (the table for the
- *      report), then stops the servers and drops the test database.
- *
- * Needs: MySQL/MariaDB running (XAMPP: start MySQL), the PHP CLI with the
- * mysqli extension. Database login defaults to XAMPP's root with no
- * password; override with TEST_DB_HOST, TEST_DB_USER, TEST_DB_PASS,
- * TEST_DB_PORT environment variables if yours differ.
- * ===================================================================== */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 declare(strict_types=1);
 error_reporting(E_ALL);
-date_default_timezone_set('Asia/Singapore');   // same as includes/config.php
+date_default_timezone_set('Asia/Singapore');
 
 $ROOT    = dirname(__DIR__);
 $APP     = $ROOT . '/cinesphere';
@@ -38,8 +38,8 @@ $DB_PASS = getenv('TEST_DB_PASS') ?: '';
 $DB_PORT = (int) (getenv('TEST_DB_PORT') ?: 3306);
 $TEST_DB = 'cinesphere_test_' . bin2hex(random_bytes(4));
 
-const FEE = 0.80;                 // BOOKING_FEE in includes/config.php
-const WEEKEND = 2.00;             // WEEKEND_SURCHARGE
+const FEE = 0.80;
+const WEEKEND = 2.00;
 const MAILBOX = 'coursework@cinesphere.local';
 
 if (!is_file($APP . '/sql/01_schema.sql')) {
@@ -47,9 +47,9 @@ if (!is_file($APP . '/sql/01_schema.sql')) {
     exit(1);
 }
 
-/* =====================================================================
- *  1. Test database
- * ===================================================================== */
+
+
+
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 try {
     $db = new mysqli($DB_HOST, $DB_USER, $DB_PASS, '', $DB_PORT);
@@ -59,7 +59,7 @@ try {
 }
 $db->set_charset('utf8mb4');
 
-/** Loads an SQL file into the test database instead of `cinesphere`. */
+
 function load_sql(mysqli $db, string $file, string $name): void
 {
     $sql = file_get_contents($file);
@@ -76,7 +76,7 @@ function load_sql(mysqli $db, string $file, string $name): void
 $cleanup = [];
 register_shutdown_function(function () use (&$cleanup) {
     foreach (array_reverse($cleanup) as $fn) {
-        try { $fn(); } catch (Throwable $e) { /* best effort */ }
+        try { $fn(); } catch (Throwable $e) {                   }
     }
 });
 
@@ -85,9 +85,9 @@ $cleanup[] = function () use ($db, $TEST_DB) { $db->query("DROP DATABASE IF EXIS
 load_sql($db, $APP . '/sql/02_seed.sql', $TEST_DB);
 $db->select_db($TEST_DB);
 
-/* =====================================================================
- *  2. Web server + mail catcher
- * ===================================================================== */
+
+
+
 function free_port(): int
 {
     $s = stream_socket_server('tcp://127.0.0.1:0');
@@ -144,9 +144,9 @@ if (!wait_for_port($webPort)) {
 }
 $BASE = "http://127.0.0.1:$webPort/cinesphere/";
 
-/* =====================================================================
- *  3. A tiny browser: keeps cookies, follows redirects, reads the token
- * ===================================================================== */
+
+
+
 final class Browser
 {
     private array $cookies = [];
@@ -161,7 +161,7 @@ final class Browser
         return $this->send('GET', $this->base . $path, null);
     }
 
-    /** POSTs a form. Adds this session's CSRF token unless $withToken is false. */
+
     public function post(string $path, array $fields, bool $withToken = true): string
     {
         if ($path === 'process_booking.php' && !array_key_exists('quote', $fields)) {
@@ -181,7 +181,7 @@ final class Browser
         return $m[1] ?? '';
     }
 
-    /** Capture an authenticated form submission for a separate HTTP worker. */
+
     public function workerRequest(string $path, array $fields): array
     {
         $fields['csrf'] = $this->token();
@@ -232,9 +232,9 @@ final class Browser
     }
 }
 
-/* =====================================================================
- *  Helpers used by the test cases
- * ===================================================================== */
+
+
+
 function one(string $sql, array $params = []): ?array
 {
     global $db;
@@ -274,7 +274,7 @@ function has(string $html, string $text): bool
     return stripos(html_entity_decode(strip_tags($html), ENT_QUOTES, 'UTF-8'), $text) !== false;
 }
 
-/** A future open screening, `$daysAhead` days from today (in hall order). */
+
 function screening(int $daysAhead, int $skip = 0): array
 {
     $d = date('Y-m-d', strtotime("+$daysAhead days"));
@@ -285,14 +285,14 @@ function screening(int $daysAhead, int $skip = 0): array
     return $row;
 }
 
-/** First $n seat ids of the hall, in row/number order, after skipping $from. */
+
 function seats_in(int $hallId, int $n, int $from = 0): array
 {
     return array_map(fn($r) => (int) $r['seat_id'],
         all("SELECT seat_id FROM seats WHERE hall_id = ? ORDER BY seat_row, seat_number LIMIT $n OFFSET $from", [$hallId]));
 }
 
-/** What a seat costs at a screening: base + weekend surcharge + seat-type surcharge. */
+
 function expected_seat_price(array $st, int $seatId): float
 {
     $s = one('SELECT surcharge FROM seats WHERE seat_id = ?', [$seatId]);
@@ -300,7 +300,7 @@ function expected_seat_price(array $st, int $seatId): float
     return round((float) $st['base_price'] + $weekend + (float) $s['surcharge'], 2);
 }
 
-/** Books seats the way a customer does: short-list, then confirm with an approved payment. */
+
 function book(Browser $b, int $userId, int $showtimeId, array $seatIds): ?array
 {
     $b->post('process_preference.php', ['showtime_id' => $showtimeId, 'seat_ids' => implode(',', $seatIds)]);
@@ -324,17 +324,17 @@ function clear_shortlist(int $userId): void
     exec_sql('DELETE FROM preferences WHERE user_id = ?', [$userId]);
 }
 
-/* Seeded accounts (see README) */
+
 $demo  = (int) one("SELECT user_id FROM users WHERE email = 'demo@cinesphere.sg'")['user_id'];
 $siti  = (int) one("SELECT user_id FROM users WHERE email = 'siti@cinesphere.sg'")['user_id'];
 
-/* =====================================================================
- *  4. The test cases
- *
- *  Each case: ID, requirement, description, input data, expected output,
- *  test method, and a function that runs it and returns
- *  [passed?, what actually happened].
- * ===================================================================== */
+
+
+
+
+
+
+
 $cases = [];
 function tc(string $id, string $req, string $title, string $input, string $expected,
             string $method, callable $run): void
@@ -346,7 +346,7 @@ function tc(string $id, string $req, string $title, string $input, string $expec
 const HTTP = 'Automated: HTTP request + page check';
 const HTTPDB = 'Automated: HTTP form post + database check';
 
-/* ---------------- F1 / F2 / R4: pages, films, schedule --------------- */
+
 
 tc('TC01', 'R4, Base', 'Every public page loads with its own title',
    'GET index, movies, movie?id=1, showtimes, booking?showtime=<first>, contact, account',
@@ -416,7 +416,7 @@ tc('TC06', 'F2, R9', 'Schedule date outside the selling week',
        return [(bool) $ok, $ok ? 'Warning shown and week listed' : 'Warning or listing missing'];
    });
 
-/* ---------------- F3 / R7 / R9: accounts and validation ------------- */
+
 
 $newUser = ['full_name' => 'Tan Wei Ming', 'email' => 'weiming.test@example.com', 'phone' => '+65 9123 4567',
             'birth_date' => '2000-05-17', 'password' => 'Movie#2026', 'confirm' => 'Movie#2026', 'terms' => 1];
@@ -505,7 +505,7 @@ tc('TC14', 'R7', 'SQL injection in the sign-in form',
        return [$ok, $ok ? 'Treated as a wrong address; no SQL error' : 'Injection had an effect'];
    });
 
-/* ---------------- F4 / F5: seat map and short-list ------------------ */
+
 
 tc('TC15', 'F4', 'Seat map marks sold seats as unavailable',
    'Siti books seat A1 of a screening; anyone opens booking.php for that screening',
@@ -581,7 +581,7 @@ tc('TC19', 'F5', 'Re-order and remove short-list entries',
        return [$ok, "After move-up rank=$rank; removed=" . ($gone ? 'yes' : 'no') . '; remaining ranks ' . implode(',', $ranks)];
    });
 
-/* ---------------- F6 / F7 / R8 / R12: checkout and email ------------ */
+
 
 tc('TC20', 'F6', 'Payment declined',
    'One short-list entry, gateway = declined', 'A "failed" booking is logged; no seats allocated; short-list unchanged', HTTPDB,
@@ -648,7 +648,7 @@ tc('TC23', 'F6, R8', 'Two customers confirm the same seat',
        return [$ok, "Seat sold $sold time(s); second customer " . ($demoGot ? 'ALSO got it' : 'refused')];
    });
 
-/* ---------------- F8: history and cancellation ---------------------- */
+
 
 tc('TC24', 'F8', 'Customer cancels more than 2 hours before',
    'demo cancels a booking for a screening 2 days ahead', 'Booking cancelled + refunded; seat back on sale; listed under cancelled', HTTPDB,
@@ -691,7 +691,7 @@ tc('TC26', 'F8, R7', 'Customer tries to cancel someone else\'s booking',
        return [$s === 'confirmed' && has($h, 'not found on your account'), "Siti's booking is still $s"];
    });
 
-/* ---------------- F9: contact form ---------------------------------- */
+
 
 $contact = ['name' => 'Aisha Rahman', 'email' => 'aisha@example.com', 'phone' => '+65 8123 4567',
             'subject' => 'Feedback', 'rating' => 5, 'message' => 'The seat map made choosing seats very easy, thank you!'];
@@ -725,7 +725,7 @@ tc('TC29', 'R7', 'Script typed into feedback is shown as text to staff',
        return [$ok, $ok ? 'Escaped as text' : 'Raw script tag found in page'];
    });
 
-/* ---------------- F10: staff tools ---------------------------------- */
+
 
 tc('TC30', 'F10, R7', 'Customer opens the staff page',
    'Signed in as demo (customer), GET admin.php', 'Access refused; staff tools not shown', HTTP,
@@ -782,7 +782,7 @@ tc('TC34', 'F10', 'Staff cancel a screening that has bookings',
        return [$ok, "Screening $st; booking {$b['booking_status']}/{$b['payment_status']}; seats held $held"];
    });
 
-/* ---------------- F10: staff booking tools and price ---------------- */
+
 
 tc('TC35', 'F10', 'Staff refund 1 of 3 seats',
    'demo books 3 seats; staff refund the middle seat with reason "One guest cannot come"',
@@ -886,7 +886,7 @@ tc('TC40', 'F10, R9', 'Staff change a screening\'s ticket price',
                     . '; short-list total S$' . $pref['est_total'] . ' (expected S$' . number_format($exp, 2) . ')'];
    });
 
-/* ---------------- Rolling schedule ---------------------------------- */
+
 
 tc('TC41', 'F2', 'Schedule tops itself up when the data is old',
    'Move every screening 14 days into the past (as if the seed was imported two weeks ago), then open the schedule',
@@ -911,13 +911,13 @@ tc('TC42', 'F2', 'Topping up never duplicates screenings',
        return [$before === $after && $dups === 0, "Screenings {$before}→{$after}, duplicates {$dups}"];
    });
 
-/* =====================================================================
- *  5. Run, report, write tests/test-results.md
- * ===================================================================== */
+
+
+
 require __DIR__ . '/financial_cases.php';
 
-/* Reuse the disposable database/server for browser checks without touching the
-   preview database. Requires Node.js, Playwright and its Chromium installation. */
+
+
 if (in_array('--browser-only', $argv, true)) {
     passthru('node ' . escapeshellarg(__DIR__ . '/ui_tests.js') . ' ' . escapeshellarg($BASE), $browserExit);
     exit($browserExit);

@@ -1,4 +1,4 @@
-/* Additional version: progressively enhanced catalogue search, no framework. */
+
 (function () {
     'use strict';
     const form = document.getElementById('movie-filters');
@@ -42,7 +42,7 @@
             if (typeof data.html !== 'string' || typeof data.summary !== 'string'
                 || !Number.isInteger(data.count)) { throw new Error('Invalid response'); }
             if (requestVersion !== version) { return; }
-            // Trusted same-origin template output; all database/input text is escaped in PHP.
+
             results.innerHTML = data.html;
             summary.textContent = data.summary;
             status.textContent = data.count === 0 ? 'No films match your search. Try another title or reset the filters.'
@@ -65,7 +65,7 @@
     }
 
     function schedule() {
-        // Invalidate immediately, not after the debounce: old responses cannot replace new input.
+
         invalidate();
         results.setAttribute('aria-busy', 'true');
         status.textContent = 'Waiting for you to finish typing…';

@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/functions.php';
 
-/** Bind a displayed choice to its exact seats and prices, using integer cents. */
+
 function checkout_fingerprint(array $choice): string
 {
     $seats = [];
@@ -15,7 +15,7 @@ function checkout_fingerprint(array $choice): string
     return hash('sha256', implode('|', $parts));
 }
 
-/** Each rendered checkout gets its own quote so separate tabs do not overwrite it. */
+
 function create_checkout_quote(array $choices): string
 {
     $quotes = $_SESSION['checkout_quotes'] ?? [];
@@ -35,7 +35,7 @@ function create_checkout_quote(array $choices): string
     return $token;
 }
 
-/** A submitted price is never authoritative: the browser sends only this token. */
+
 function take_checkout_quote($token): ?array
 {
     if (!is_string($token) || !isset($_SESSION['checkout_quotes'][$token])) { return null; }
@@ -50,7 +50,7 @@ function checkout_quote_matches(array $quote, array $choice): bool
     return is_string($fingerprint) && hash_equals($fingerprint, checkout_fingerprint($choice));
 }
 
-/** Read current monetary state after the caller has locked its screening. */
+
 function locked_checkout_choice(int $pref_id, int $user_id): ?array
 {
     $choice = db_one('SELECT * FROM preferences WHERE pref_id = ? AND user_id = ? FOR UPDATE',

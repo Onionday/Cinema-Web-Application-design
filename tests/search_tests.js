@@ -1,5 +1,5 @@
-/* Read-only modern catalogue checks against a running local site.
-   NODE_PATH must resolve Playwright; PLAYWRIGHT_CHANNEL=msedge is supported. */
+
+
 const { chromium } = require('playwright');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');

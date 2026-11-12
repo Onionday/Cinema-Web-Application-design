@@ -1,12 +1,12 @@
--- =====================================================================
---  CineSphere - 05_booking_adjustments.sql
---
---  Non-destructive upgrade for an existing database: adds the audit log
---  used by the staff "Manage booking" tools (seat refunds, seat moves and
---  staff cancellations). Users, bookings and the schedule are untouched.
---  Safe to run more than once. Fresh installs get this table from
---  01_schema.sql instead.
--- =====================================================================
+
+
+
+
+
+
+
+
+
 
 USE cinesphere;
 

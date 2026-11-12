@@ -1,16 +1,16 @@
 <?php
-/* =====================================================================
- * admin.php - the staff page
- *
- * Restricted to accounts whose role is 'admin'. This is where the
- * project's INSERT and UPDATE statements against the catalogue live:
- * new screenings are scheduled, films are moved between "coming soon"
- * and "now showing", screenings are cancelled and feedback is triaged.
- *
- * admin.php?booking=CS1A2B3C26 opens one booking for staff to refund
- * seats, move a seat or cancel it; the upcoming schedule lets staff
- * change a screening's ticket price. Both post to admin_action.php.
- * ===================================================================== */
+
+
+
+
+
+
+
+
+
+
+
+
 
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/booking_admin.php';
@@ -19,7 +19,7 @@ require_admin();
 
 $me = current_user();
 
-/* ---- Reference data for the form ---------------------------------- */
+
 $movies = db_all("SELECT movie_id, title, status FROM movies
                    WHERE status <> 'archived' ORDER BY title");
 
@@ -30,7 +30,7 @@ $halls = db_all(
       ORDER BY c.name, h.hall_name'
 );
 
-/* ---- Headline numbers --------------------------------------------- */
+
 $kpi = db_one(
     "SELECT
         (SELECT COUNT(*) FROM bookings WHERE booking_status = 'confirmed')  AS bookings,
@@ -40,7 +40,7 @@ $kpi = db_one(
         (SELECT COUNT(*) FROM contact_messages WHERE msg_status = 'new')    AS new_msgs"
 );
 
-/* ---- Busiest screenings ------------------------------------------- */
+
 $busiest = db_all(
     "SELECT v.*, ROUND(v.seats_taken / v.total_seats * 100) AS pct
        FROM v_showtime_availability v
@@ -50,7 +50,7 @@ $busiest = db_all(
       LIMIT 8"
 );
 
-/* ---- Recent bookings ---------------------------------------------- */
+
 $recent = db_all(
     'SELECT b.booking_ref, b.seat_count, b.total_amount, b.booking_status,
             b.payment_status, b.booked_at, u.full_name, u.email,
@@ -63,7 +63,7 @@ $recent = db_all(
       LIMIT 12'
 );
 
-/* ---- Feedback queue ------------------------------------------------ */
+
 $msgFilter = (string) ($_GET['msgs'] ?? 'new');
 if (!in_array($msgFilter, ['new', 'read', 'resolved', 'all'], true)) {
     $msgFilter = 'new';
@@ -74,7 +74,7 @@ $messages = $msgFilter === 'all'
     : db_all('SELECT * FROM contact_messages WHERE msg_status = ?
                ORDER BY submitted_at DESC LIMIT 25', [$msgFilter]);
 
-/* ---- Upcoming schedule, so staff can cancel a screening ------------ */
+
 $schedule = db_all(
     "SELECT v.* FROM v_showtime_availability v
       WHERE TIMESTAMP(v.show_date, v.show_time) >= NOW()
@@ -82,13 +82,13 @@ $schedule = db_all(
       LIMIT 20"
 );
 
-/* ---- One booking to manage (admin.php?booking=REF) ---------------- */
+
 $lookupRaw   = trim((string) ($_GET['booking'] ?? ''));
 $lookupRef   = v_booking_ref($lookupRaw);
 $manage      = $lookupRef !== '' ? find_booking_by_ref($lookupRef) : null;
-$manageHeld  = [];   // seats the booking holds now
-$manageSeats = [];   // what to list (history for cancelled bookings)
-$manageFree  = [];   // free seats a held seat can move to
+$manageHeld  = [];
+$manageSeats = [];
+$manageFree  = [];
 $manageLog   = [];
 $canChange   = false;
 
@@ -136,7 +136,7 @@ require __DIR__ . '/includes/header.php';
 
 <div class="container" style="padding-bottom:4rem;">
 
-  <!-- ======================== KPI STRIP ========================== -->
+
   <div class="stat-strip" style="margin-bottom:2rem;">
     <div class="stat"><span class="n"><?= (int) $kpi['bookings'] ?></span><span class="l">Confirmed bookings</span></div>
     <div class="stat"><span class="n"><?= e(money($kpi['revenue'])) ?></span><span class="l">Gross takings</span></div>
@@ -144,7 +144,7 @@ require __DIR__ . '/includes/header.php';
     <div class="stat"><span class="n"><?= (int) $kpi['new_msgs'] ?></span><span class="l">Unread messages</span></div>
   </div>
 
-  <!-- ============== MANAGE A BOOKING (UPDATE / DELETE) ========== -->
+
   <div class="panel" id="manage">
     <div class="panel-head">
       <h2>Manage a booking</h2>
@@ -203,7 +203,7 @@ require __DIR__ . '/includes/header.php';
 
           <div class="admin-grid" style="margin-top:1.4rem;">
 
-            <!-- Refund selected seats -->
+
             <form method="post" action="admin_action.php" data-validate>
               <?= csrf_field() ?>
               <input type="hidden" name="action" value="refund_seats">
@@ -233,7 +233,7 @@ require __DIR__ . '/includes/header.php';
               </button>
             </form>
 
-            <!-- Move one seat -->
+
             <form method="post" action="admin_action.php" data-validate>
               <?= csrf_field() ?>
               <input type="hidden" name="action" value="move_seat">
@@ -287,7 +287,7 @@ require __DIR__ . '/includes/header.php';
             </form>
           </div>
 
-          <!-- Cancel the whole booking -->
+
           <form method="post" action="admin_action.php" class="form-actions" data-validate
                 style="margin-top:.6rem;padding-top:1.2rem;border-top:1px solid var(--line-soft);">
             <?= csrf_field() ?>
@@ -343,7 +343,7 @@ require __DIR__ . '/includes/header.php';
 
   <div class="admin-grid">
 
-    <!-- ============== SCHEDULE A NEW SCREENING (INSERT) ========== -->
+
     <div>
       <div class="panel">
         <div class="panel-head">
@@ -448,7 +448,7 @@ require __DIR__ . '/includes/header.php';
       </div>
 
 
-      <!-- ============ CATALOGUE STATUS (UPDATE) ================= -->
+
       <div class="panel">
         <div class="panel-head">
           <h2>Catalogue</h2>
@@ -495,10 +495,10 @@ require __DIR__ . '/includes/header.php';
     </div>
 
 
-    <!-- =================== RIGHT-HAND COLUMN ==================== -->
+
     <div>
 
-      <!-- ================ OCCUPANCY ========================= -->
+
       <div class="panel">
         <div class="panel-head">
           <h2>Filling fastest</h2>
@@ -540,7 +540,7 @@ require __DIR__ . '/includes/header.php';
       </div>
 
 
-      <!-- ====== CANCEL A SCREENING / SET ITS PRICE (UPDATE) ====== -->
+
       <div class="panel" id="schedule">
         <div class="panel-head">
           <h2>Upcoming schedule</h2>
@@ -620,7 +620,7 @@ require __DIR__ . '/includes/header.php';
       </div>
 
 
-      <!-- ================ FEEDBACK QUEUE (UPDATE) ============= -->
+
       <div class="panel">
         <div class="panel-head">
           <h2>Guest feedback</h2>
@@ -675,7 +675,7 @@ require __DIR__ . '/includes/header.php';
   </div>
 
 
-  <!-- ==================== RECENT BOOKINGS ====================== -->
+
   <div class="panel" style="margin-top:1.6rem;">
     <div class="panel-head">
       <h2>Recent bookings</h2>

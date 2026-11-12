@@ -1,18 +1,18 @@
 <?php
-/* =====================================================================
- * includes/db.php
- *
- * One mysqli connection per request, plus three small helpers that wrap
- * prepared statements. Every SQL statement in this project goes through
- * db_query() / db_execute(), so no user-supplied value is ever
- * concatenated into an SQL string.
- * ===================================================================== */
+
+
+
+
+
+
+
+
 
 require_once __DIR__ . '/config.php';
 
-/**
- * Returns the shared mysqli connection, opening it on first use.
- */
+
+
+
 function db(): mysqli
 {
     static $conn = null;
@@ -45,13 +45,13 @@ function db(): mysqli
     return $conn;
 }
 
-/**
- * Runs a SELECT and returns the mysqli_result.
- *
- * @param string $sql    SQL with ? placeholders
- * @param array  $params Values to bind
- * @param string $types  bind_param type string; auto-detected when empty
- */
+
+
+
+
+
+
+
 function db_query(string $sql, array $params = [], string $types = '')
 {
     $stmt = db()->prepare($sql);
@@ -67,11 +67,11 @@ function db_query(string $sql, array $params = [], string $types = '')
     return $result;
 }
 
-/**
- * Runs an INSERT / UPDATE / DELETE.
- *
- * @return array{affected:int, insert_id:int}
- */
+
+
+
+
+
 function db_execute(string $sql, array $params = [], string $types = ''): array
 {
     $stmt = db()->prepare($sql);
@@ -87,7 +87,7 @@ function db_execute(string $sql, array $params = [], string $types = ''): array
     return $out;
 }
 
-/** Convenience: first row of a SELECT, or null. */
+
 function db_one(string $sql, array $params = [], string $types = ''): ?array
 {
     $res = db_query($sql, $params, $types);
@@ -98,7 +98,7 @@ function db_one(string $sql, array $params = [], string $types = ''): ?array
     return $row ?: null;
 }
 
-/** Convenience: every row of a SELECT as a plain array. */
+
 function db_all(string $sql, array $params = [], string $types = ''): array
 {
     $res  = db_query($sql, $params, $types);
@@ -112,7 +112,7 @@ function db_all(string $sql, array $params = [], string $types = ''): array
     return $rows;
 }
 
-/** Builds the bind_param type string from the PHP types of the values. */
+
 function db_types(array $params): string
 {
     $t = '';

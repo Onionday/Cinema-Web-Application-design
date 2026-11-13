@@ -1,15 +1,15 @@
 <?php
-
-
-
-
-
-
-
-
-
-
-
+/* =====================================================================
+ * process_account.php
+ *
+ * Updates the signed-in customer's own details.
+ *
+ * This is the project's UPDATE against the users table. The email
+ * address is re-checked for uniqueness against every OTHER account
+ * before it is written.
+ *
+ * SQL used: SELECT, UPDATE.
+ * ===================================================================== */
 
 require_once __DIR__ . '/includes/auth.php';
 
@@ -25,7 +25,7 @@ $email     = v_email((string) ($_POST['email'] ?? ''), $errors);
 $phone     = v_phone((string) ($_POST['phone'] ?? ''), $errors);
 $birth     = v_birthdate((string) ($_POST['birth_date'] ?? ''), $errors);
 
-
+/* The address may not belong to somebody else. */
 if (!isset($errors['email'])) {
     $clash = db_one('SELECT user_id FROM users WHERE email = ? AND user_id <> ?',
                     [$email, $user_id]);
@@ -45,7 +45,7 @@ if ($errors) {
     redirect('account.php?tab=details');
 }
 
-
+/* ---- Write it ------------------------------------------------------- */
 $emailChanged = (strtolower($me['email']) !== strtolower($email));
 
 db_execute(

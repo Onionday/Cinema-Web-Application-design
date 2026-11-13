@@ -1,16 +1,16 @@
 <?php
-
-
-
-
-
-
-
-
-
-
-
-
+/* =====================================================================
+ * cancel_booking.php
+ *
+ * Cancels one confirmed booking and releases its seats.
+ *
+ * The booking row is kept - it is UPDATEd to 'cancelled' rather than
+ * deleted, so the customer keeps a record of it - while the rows in
+ * booking_seats are removed, which is what actually puts the seats back
+ * on sale for everybody else.
+ *
+ * SQL used: SELECT, UPDATE, DELETE.
+ * ===================================================================== */
 
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/mailer.php';
@@ -21,7 +21,7 @@ require_login();
 $user_id    = current_user_id();
 $booking_id = (int) ($_POST['booking_id'] ?? 0);
 
-
+/* ---- The booking must exist and belong to this customer ----------- */
 $booking = get_booking($booking_id);
 
 if (!$booking || (int) $booking['user_id'] !== $user_id) {
@@ -35,7 +35,7 @@ if ($booking['booking_status'] !== 'confirmed') {
     redirect('mybookings.php?show=other');
 }
 
-
+/* Require strictly more than two hours; exactly two hours is refused. */
 $startsAt = strtotime($booking['show_date'] . ' ' . $booking['show_time']);
 
 if ($startsAt - time() <= 2 * 3600) {
@@ -45,7 +45,7 @@ if ($startsAt - time() <= 2 * 3600) {
     redirect('mybookings.php');
 }
 
-
+/* Lock screening then booking; archive ticket seats before releasing them. */
 $conn = db();
 $conn->begin_transaction();
 
@@ -59,13 +59,13 @@ try {
     }
     $booking = array_replace($booking, $fresh);
     $seats = get_held_seats($booking_id, true);
-
+    /* The request may have waited on a staff adjustment; check the cutoff again. */
     if (strtotime($booking['show_date'] . ' ' . $booking['show_time']) - time() <= 2 * 3600) {
         throw new RuntimeException('The online cancellation window has closed.');
     }
     archive_booking_seats($booking_id);
 
-
+    /* UPDATE - the booking is marked cancelled and refunded */
     db_execute(
         "UPDATE bookings
             SET booking_status = 'cancelled',
@@ -74,7 +74,7 @@ try {
         [$booking_id, $user_id]
     );
 
-
+    /* DELETE - the seats go back on sale */
     db_execute('DELETE FROM booking_seats WHERE booking_id = ?', [$booking_id]);
 
     $conn->commit();
@@ -87,7 +87,7 @@ try {
     redirect('mybookings.php');
 }
 
-
+/* ---- Acknowledge it ------------------------------------------------ */
 $booking['payment_status'] = 'refunded';
 $mailSent = send_cancellation_notice($booking, $seats);
 

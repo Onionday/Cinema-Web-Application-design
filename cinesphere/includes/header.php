@@ -1,12 +1,12 @@
 <?php
-
-
-
-
-
-
-
-
+/* =====================================================================
+ * includes/header.php
+ *
+ * The top of every page. A page sets these before requiring it:
+ *   $page_title       - goes in <title> and is required
+ *   $page_description - meta description
+ *   $page_scripts     - array of extra .js files to load before </body>
+ * ===================================================================== */
 
 require_once __DIR__ . '/auth.php';
 

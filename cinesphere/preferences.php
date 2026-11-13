@@ -1,16 +1,16 @@
 <?php
-
-
-
-
-
-
-
-
-
-
-
-
+/* =====================================================================
+ * preferences.php - the customer's ranked short-list
+ *
+ * This is the page the theme description asks for: the customer lodges
+ * several bookings in order of preference, the site presents the ones
+ * that are still available, and the customer makes a final selection of
+ * one or more of them.
+ *
+ * Every entry is re-checked against the live bookings table as the page
+ * is built, so an entry whose seats were sold in the meantime is shown
+ * as unavailable rather than silently failing at payment.
+ * ===================================================================== */
 
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/checkout.php';
@@ -79,7 +79,7 @@ require __DIR__ . '/includes/booking_progress.php';
 
 <?php else: ?>
 
-
+  <!-- ===================== STATUS SUMMARY ======================== -->
   <?php if ($blockedCount > 0): ?>
     <p class="notice notice-warning">
       <?= $blockedCount ?> of your <?= count($prefs) ?>
@@ -106,7 +106,7 @@ require __DIR__ . '/includes/booking_progress.php';
   </div>
 
 
-
+  <!-- =================== THE FINAL SELECTION ===================== -->
   <form id="confirm-form" method="post" action="process_booking.php"
         data-currency="<?= e(CURRENCY) ?>">
     <?= csrf_field() ?>
@@ -196,7 +196,7 @@ require __DIR__ . '/includes/booking_progress.php';
     <p class="notice notice-error" id="pref-warning" hidden></p>
 
 
-
+    <!-- ======================= PAYMENT ========================== -->
     <?php if ($availableCount > 0): ?>
     <div class="card card-pad-lg" style="margin-top:2rem;">
       <h2 style="font-size:1.15rem;">Payment</h2>
@@ -237,7 +237,7 @@ require __DIR__ . '/includes/booking_progress.php';
     <?php endif; ?>
 
 
-
+    <!-- ====================== CHECKOUT BAR ====================== -->
     <?php if ($availableCount > 0): ?>
     <div class="checkout-bar">
       <div>
@@ -266,7 +266,7 @@ require __DIR__ . '/includes/booking_progress.php';
   </form>
 
 
-
+  <!-- ====================== HOUSEKEEPING ======================== -->
   <div class="card" style="margin-top:2rem;">
     <h2 style="font-size:1.05rem;">Reorder or remove</h2>
     <p class="muted small">

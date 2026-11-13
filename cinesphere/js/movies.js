@@ -1,4 +1,4 @@
-
+/* Additional version: progressively enhanced catalogue search, no framework. */
 (function () {
     'use strict';
     const form = document.getElementById('movie-filters');
@@ -11,6 +11,7 @@
     const defaults = { q: '', status: 'now_showing', genre: '', rating: '', sort: 'score' };
     let timer, controller, version = 0, composing = false;
 
+    // Abort saves work; the version counter also rejects responses already in flight.
     function invalidate() {
         clearTimeout(timer);
         if (controller) { controller.abort(); }
@@ -42,7 +43,7 @@
             if (typeof data.html !== 'string' || typeof data.summary !== 'string'
                 || !Number.isInteger(data.count)) { throw new Error('Invalid response'); }
             if (requestVersion !== version) { return; }
-
+            // Trusted same-origin template output; all database/input text is escaped in PHP.
             results.innerHTML = data.html;
             summary.textContent = data.summary;
             status.textContent = data.count === 0 ? 'No films match your search. Try another title or reset the filters.'
@@ -65,11 +66,12 @@
     }
 
     function schedule() {
-
+        // Invalidate immediately, not after the debounce: old responses cannot replace new input.
         invalidate();
         results.setAttribute('aria-busy', 'true');
         status.textContent = 'Waiting for you to finish typing…';
         retry.hidden = true;
+        // Debounce typing by 300 ms; composition events avoid incomplete IME searches.
         if (!composing) { timer = setTimeout(search, 300); }
     }
     input.addEventListener('compositionstart', function () { composing = true; invalidate(); });
@@ -88,6 +90,7 @@
         input.focus();
         search();
     });
+    // Back/Forward restores filters from the URL without adding another history entry.
     window.addEventListener('popstate', function () {
         const params = new URLSearchParams(location.search);
         Object.keys(defaults).forEach(function (key) {

@@ -1,11 +1,11 @@
-
-
-
-
-
-
-
-
+-- =====================================================================
+--  CineSphere - Cinema Ticket Booking Portal
+--  IE4727 Web Application Design  |  Theme 5
+--  File: 01_schema.sql   (database + table definitions)
+--
+--  Import order:  01_schema.sql  ->  02_seed.sql
+--  Import via phpMyAdmin, or:  mysql -u root -p < 01_schema.sql
+-- =====================================================================
 
 DROP DATABASE IF EXISTS cinesphere;
 CREATE DATABASE cinesphere
@@ -14,9 +14,9 @@ CREATE DATABASE cinesphere
 USE cinesphere;
 
 
-
-
-
+-- ---------------------------------------------------------------------
+-- users : registered customers and administrators
+-- ---------------------------------------------------------------------
 CREATE TABLE users (
     user_id       INT AUTO_INCREMENT PRIMARY KEY,
     full_name     VARCHAR(80)  NOT NULL,
@@ -32,9 +32,9 @@ CREATE TABLE users (
 ) ENGINE=InnoDB;
 
 
-
-
-
+-- ---------------------------------------------------------------------
+-- cinemas : physical venues
+-- ---------------------------------------------------------------------
 CREATE TABLE cinemas (
     cinema_id   INT AUTO_INCREMENT PRIMARY KEY,
     name        VARCHAR(80)  NOT NULL,
@@ -45,9 +45,9 @@ CREATE TABLE cinemas (
 ) ENGINE=InnoDB;
 
 
-
-
-
+-- ---------------------------------------------------------------------
+-- halls : screening rooms inside a cinema
+-- ---------------------------------------------------------------------
 CREATE TABLE halls (
     hall_id       INT AUTO_INCREMENT PRIMARY KEY,
     cinema_id     INT NOT NULL,
@@ -60,9 +60,9 @@ CREATE TABLE halls (
 ) ENGINE=InnoDB;
 
 
-
-
-
+-- ---------------------------------------------------------------------
+-- seats : one physical seat in one hall
+-- ---------------------------------------------------------------------
 CREATE TABLE seats (
     seat_id     INT AUTO_INCREMENT PRIMARY KEY,
     hall_id     INT NOT NULL,
@@ -76,9 +76,9 @@ CREATE TABLE seats (
 ) ENGINE=InnoDB;
 
 
-
-
-
+-- ---------------------------------------------------------------------
+-- movies
+-- ---------------------------------------------------------------------
 CREATE TABLE movies (
     movie_id     INT AUTO_INCREMENT PRIMARY KEY,
     title        VARCHAR(120) NOT NULL,
@@ -103,9 +103,9 @@ CREATE INDEX idx_movies_status ON movies (status);
 CREATE INDEX idx_movies_genre  ON movies (genre);
 
 
-
-
-
+-- ---------------------------------------------------------------------
+-- showtimes : one screening of one movie, in one hall, at one time
+-- ---------------------------------------------------------------------
 CREATE TABLE showtimes (
     showtime_id INT AUTO_INCREMENT PRIMARY KEY,
     movie_id    INT  NOT NULL,
@@ -125,12 +125,12 @@ CREATE TABLE showtimes (
 CREATE INDEX idx_show_date ON showtimes (show_date, show_time);
 
 
-
-
-
-
-
-
+-- ---------------------------------------------------------------------
+-- preferences : the customer's ranked short-list, built BEFORE booking.
+-- The theme requires the customer to be able to lodge several choices in
+-- order of preference and then make a final selection from whichever of
+-- them are still available.
+-- ---------------------------------------------------------------------
 CREATE TABLE preferences (
     pref_id     INT AUTO_INCREMENT PRIMARY KEY,
     user_id     INT NOT NULL,
@@ -147,9 +147,9 @@ CREATE TABLE preferences (
 ) ENGINE=InnoDB;
 
 
-
-
-
+-- ---------------------------------------------------------------------
+-- preference_seats : the specific seats held inside one preference entry
+-- ---------------------------------------------------------------------
 CREATE TABLE preference_seats (
     pref_seat_id INT AUTO_INCREMENT PRIMARY KEY,
     pref_id      INT NOT NULL,
@@ -163,9 +163,9 @@ CREATE TABLE preference_seats (
 ) ENGINE=InnoDB;
 
 
-
-
-
+-- ---------------------------------------------------------------------
+-- bookings : a confirmed (or failed / cancelled) transaction
+-- ---------------------------------------------------------------------
 CREATE TABLE bookings (
     booking_id     INT AUTO_INCREMENT PRIMARY KEY,
     booking_ref    VARCHAR(16) NOT NULL,
@@ -190,11 +190,11 @@ CREATE TABLE bookings (
 CREATE INDEX idx_book_user ON bookings (user_id, booked_at);
 
 
-
-
-
-
-
+-- ---------------------------------------------------------------------
+-- booking_seats : which seats a booking occupies.
+-- The UNIQUE key on (showtime_id, seat_id) is what physically prevents
+-- two customers from ever holding the same seat for the same screening.
+-- ---------------------------------------------------------------------
 CREATE TABLE booking_seats (
     booking_seat_id INT AUTO_INCREMENT PRIMARY KEY,
     booking_id      INT NOT NULL,
@@ -211,9 +211,9 @@ CREATE TABLE booking_seats (
 ) ENGINE=InnoDB;
 
 
-
-
-
+-- ---------------------------------------------------------------------
+-- contact_messages : feedback / enquiry form submissions
+-- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS booking_seat_history (
     booking_id INT NOT NULL,
     seat_id INT NOT NULL,
@@ -226,11 +226,11 @@ CREATE TABLE IF NOT EXISTS booking_seat_history (
         REFERENCES bookings(booking_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
-
-
-
-
-
+-- ------------------------------------------------------------------
+-- booking_adjustments: audit log of staff changes to a booking
+--   amount_change < 0 = money returned to the customer
+--   amount_change > 0 = extra to collect (e.g. moved to a pricier seat)
+-- ------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS booking_adjustments (
     adjustment_id INT AUTO_INCREMENT PRIMARY KEY,
     booking_id    INT NOT NULL,
@@ -261,10 +261,10 @@ CREATE TABLE contact_messages (
 ) ENGINE=InnoDB;
 
 
-
-
-
-
+-- ---------------------------------------------------------------------
+-- A read-only view used by showtimes.php so that the seat-availability
+-- arithmetic lives in the database rather than being repeated in PHP.
+-- ---------------------------------------------------------------------
 CREATE OR REPLACE VIEW v_showtime_availability AS
 SELECT  st.showtime_id,
         st.movie_id,

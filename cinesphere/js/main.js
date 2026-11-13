@@ -1,21 +1,21 @@
-
-
-
-
-
-
-
-
-
+/* =====================================================================
+ * js/main.js
+ *
+ * Small site-wide behaviours: the mobile navigation, two-step confirm
+ * buttons, auto-submitting filter controls and the short-list checkbox
+ * totals. Loaded on every page.
+ *
+ * Plain DOM only - no library, no AJAX, no JSON.
+ * ===================================================================== */
 
 (function () {
     'use strict';
 
     document.addEventListener('DOMContentLoaded', function () {
 
-
-
-
+        /* -------------------------------------------------------------
+         * 1. Close the mobile menu after a link is tapped
+         * ----------------------------------------------------------- */
         var toggle = document.getElementById('nav-toggle');
         var navigation = document.getElementById('site-navigation');
         if (toggle && navigation) {
@@ -42,13 +42,13 @@
             resizeMenu();
         }
 
-
-
-
-
-
-
-
+        /* -------------------------------------------------------------
+         * 2. Two-step confirmation.
+         *
+         * A button carrying data-confirm="..." has to be pressed twice.
+         * This replaces a window.confirm() dialog: it cannot be blocked
+         * by the browser and it keeps the page's own styling.
+         * ----------------------------------------------------------- */
         var confirms = document.querySelectorAll('[data-confirm]');
         Array.prototype.forEach.call(confirms, function (btn) {
 
@@ -57,7 +57,7 @@
             var timer = null;
 
             btn.addEventListener('click', function (ev) {
-                if (armed) { return; }
+                if (armed) { return; }            // second press: let it through
 
                 ev.preventDefault();
                 armed = true;
@@ -81,11 +81,11 @@
         });
 
 
-
-
-
-
-
+        /* -------------------------------------------------------------
+         * 3. Filter bars submit themselves when a select changes, so the
+         *    visitor does not have to find the button. The button stays
+         *    in the markup for anyone without JavaScript.
+         * ----------------------------------------------------------- */
         var autoForms = document.querySelectorAll('form[data-autosubmit]');
         Array.prototype.forEach.call(autoForms, function (form) {
             var controls = form.querySelectorAll('select, input[type="date"]');
@@ -95,10 +95,10 @@
         });
 
 
-
-
-
-
+        /* -------------------------------------------------------------
+         * 4. Short-list page: keep the running total in step with the
+         *    ticked entries, and stop an empty confirmation being sent.
+         * ----------------------------------------------------------- */
         var prefForm = document.getElementById('confirm-form');
         if (prefForm) {
 
@@ -169,9 +169,9 @@
         }
 
 
-
-
-
+        /* -------------------------------------------------------------
+         * 5. A "select all available" helper on the short-list.
+         * ----------------------------------------------------------- */
         var allBtn = document.getElementById('pick-all');
         if (allBtn) {
             allBtn.addEventListener('click', function (ev) {
@@ -191,9 +191,9 @@
         }
 
 
-
-
-
+        /* -------------------------------------------------------------
+         * 6. Print button on the confirmation page.
+         * ----------------------------------------------------------- */
         var printBtn = document.getElementById('print-ticket');
         if (printBtn) {
             printBtn.addEventListener('click', function (ev) {
@@ -203,10 +203,10 @@
         }
 
 
-
-
-
-
+        /* -------------------------------------------------------------
+         * 7. Barcodes on the ticket stubs are drawn from the booking
+         *    reference so that each one looks different.
+         * ----------------------------------------------------------- */
         var barcodes = document.querySelectorAll('.barcode[data-ref]');
         Array.prototype.forEach.call(barcodes, function (bc) {
             var ref = bc.getAttribute('data-ref');

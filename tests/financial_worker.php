@@ -1,5 +1,5 @@
 <?php
-
+/* CLI worker used only against the randomly named test database. */
 if (PHP_SAPI !== 'cli' || !preg_match('/^cinesphere_test_[a-f0-9]+$/', getenv('CINESPHERE_DB_NAME') ?: '')) {
     http_response_code(403);
     exit(1);

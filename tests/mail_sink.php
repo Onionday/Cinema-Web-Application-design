@@ -1,16 +1,16 @@
 <?php
-
-
-
-
-
-
-
-
-
-
-
-
+/* =====================================================================
+ * tests/mail_sink.php - catches the site's emails during a test run
+ *
+ * Nothing is delivered anywhere: each message is appended to a text file
+ * so run_tests.php can check that the acknowledgement was produced and
+ * addressed to the local coursework mailbox.
+ *
+ *   Windows (XAMPP): PHP's mail() talks SMTP, so this runs as a tiny
+ *                    SMTP server:   php mail_sink.php smtp <port> <file>
+ *   Linux / macOS:   PHP's mail() pipes to sendmail_path, so this reads
+ *                    the message:   php mail_sink.php pipe <file>
+ * ===================================================================== */
 
 $mode = $argv[1] ?? '';
 

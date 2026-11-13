@@ -1,11 +1,11 @@
 <?php
-
-
-
-
-
-
-
+/* =====================================================================
+ * mybookings.php - the customer's own booking history
+ *
+ * A server-side generated page: nothing here exists as static markup.
+ * Bookings are split into what is still ahead, what has been seen, and
+ * the attempts that never became a booking.
+ * ===================================================================== */
 
 require_once __DIR__ . '/includes/auth.php';
 
@@ -19,7 +19,7 @@ if (!in_array($filter, ['upcoming', 'past', 'other'], true)) {
     $filter = 'upcoming';
 }
 
-
+/* ---- One query, grouped in PHP ------------------------------------ */
 $all = db_all(
     'SELECT b.*, st.show_date, st.show_time, st.format,
             m.movie_id, m.title, m.poster, m.classification, m.duration_min,
@@ -45,7 +45,7 @@ $now      = time();
 foreach ($all as $b) {
     $b['seats']    = get_booking_seats((int) $b['booking_id']);
     $b['starts']   = strtotime($b['starts_at']);
-
+    /* Cancellation closes two hours before the screening begins. */
     $b['can_cancel'] = ($b['booking_status'] === 'confirmed')
                      && ($b['starts'] - $now > 2 * 3600);
 
@@ -58,10 +58,10 @@ foreach ($all as $b) {
     }
 }
 
-
+/* Upcoming reads better soonest-first. */
 usort($upcoming, static fn($a, $b) => $a['starts'] <=> $b['starts']);
 
-
+/* ---- A few figures for the header --------------------------------- */
 $totals = db_one(
     "SELECT COUNT(*) AS n, COALESCE(SUM(seat_count), 0) AS tickets,
             COALESCE(SUM(total_amount), 0) AS spent
@@ -109,7 +109,7 @@ require __DIR__ . '/includes/header.php';
 
 <div class="container" style="padding-bottom:4rem;">
 
-
+  <!-- ====================== ACCOUNT SUMMARY ===================== -->
   <div class="stat-strip" style="margin-bottom:2rem;">
     <div class="stat">
       <span class="n"><?= (int) $totals['n'] ?></span>
@@ -131,7 +131,7 @@ require __DIR__ . '/includes/header.php';
     </div>
   </div>
 
-
+  <!-- ========================== TABS ============================ -->
   <div class="tabs">
     <a href="mybookings.php?show=upcoming" class="<?= $filter === 'upcoming' ? 'active' : '' ?>">
       Coming up <span class="pill"><?= count($upcoming) ?></span>
@@ -144,7 +144,7 @@ require __DIR__ . '/includes/header.php';
     </a>
   </div>
 
-
+  <!-- ========================= THE LIST ========================= -->
   <?php if (!$shown): ?>
 
     <div class="empty-state">

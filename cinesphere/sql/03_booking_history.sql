@@ -1,5 +1,5 @@
-
-
+-- Non-destructive upgrade for existing installations; safe to repeat.
+-- Do NOT re-import 01_schema.sql: it resets the database.
 USE cinesphere;
 CREATE TABLE IF NOT EXISTS booking_seat_history (
     booking_id INT NOT NULL,
@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS booking_seat_history (
         REFERENCES bookings(booking_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
-
+-- Previously deleted seats cannot be reconstructed.
 INSERT IGNORE INTO booking_seat_history
     (booking_id, seat_id, seat_row, seat_number, seat_type, seat_price)
 SELECT bs.booking_id, bs.seat_id, s.seat_row, s.seat_number, s.seat_type, bs.seat_price

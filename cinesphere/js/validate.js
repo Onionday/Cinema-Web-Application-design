@@ -1,23 +1,23 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
+/* =====================================================================
+ * js/validate.js
+ *
+ * Client-side validation for every form on the site.
+ *
+ * This runs IN ADDITION to the HTML5 attributes on the inputs and to the
+ * server-side checks in includes/functions.php. Nothing here is trusted:
+ * it exists so the visitor gets an answer the instant they leave a field
+ * instead of after a round trip. The rules are deliberately identical to
+ * the PHP ones so the two never disagree.
+ *
+ * Plain DOM only - no library, no AJAX.
+ * ===================================================================== */
 
 (function () {
     'use strict';
 
-
-
-
+    /* ---------------------------------------------------------------- */
+    /*  Individual rules. Each returns '' when valid, or a message.      */
+    /* ---------------------------------------------------------------- */
 
     var RULES = {
 
@@ -68,7 +68,7 @@
             return '';
         },
 
-
+        /* data-match="#password" */
         match: function (value, field) {
             var other = document.querySelector(field.getAttribute('data-match'));
             if (!other) { return ''; }
@@ -76,9 +76,9 @@
             return value === other.value ? '' : 'The two passwords do not match.';
         },
 
-
+        /* Account holders must be 13 or older. */
         birthdate: function (value) {
-            if (value.trim() === '') { return ''; }
+            if (value.trim() === '') { return ''; }          // optional
             var parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
             if (!parts) { return 'Enter the date as YYYY-MM-DD.'; }
 
@@ -99,7 +99,7 @@
             return '';
         },
 
-
+        /* data-minlen="20" */
         minlen: function (value, field) {
             var n = parseInt(field.getAttribute('data-minlen'), 10) || 0;
             var v = value.trim();
@@ -110,7 +110,7 @@
             return '';
         },
 
-
+        /* data-maxlen="1200" */
         maxlen: function (value, field) {
             var n = parseInt(field.getAttribute('data-maxlen'), 10) || 0;
             if (value.trim().length > n) {
@@ -119,17 +119,17 @@
             return '';
         },
 
-
+        /* A <select> whose first option is a placeholder with value "". */
         choose: function (value, field) {
             return value === '' ? ('Please choose ' + label(field).toLowerCase() + '.') : '';
         },
 
-
+        /* A checkbox that has to be ticked. */
         accept: function (value, field) {
             return field.checked ? '' : 'Please tick this box to continue.';
         },
 
-
+        /* data-min / data-max on a number input. */
         number: function (value, field) {
             if (value.trim() === '') { return label(field) + ' is required.'; }
             var n = Number(value);
@@ -141,7 +141,7 @@
             return '';
         },
 
-
+        /* A date that must not be in the past. */
         futuredate: function (value, field) {
             if (value.trim() === '') { return label(field) + ' is required.'; }
             var today = new Date();
@@ -153,9 +153,9 @@
     };
 
 
-
-
-
+    /* ---------------------------------------------------------------- */
+    /*  Helpers                                                          */
+    /* ---------------------------------------------------------------- */
 
     function label(field) {
         var wrap = field.closest('.field');
@@ -176,7 +176,7 @@
         return box;
     }
 
-
+    /** Runs every rule named in data-check on one field. */
     function checkField(field) {
         var spec = field.getAttribute('data-check');
         if (!spec) { return true; }
@@ -207,7 +207,7 @@
         return message === '';
     }
 
-
+    /** Validates a whole form; focuses the first bad field. */
     function checkForm(form) {
         var fields = form.querySelectorAll('[data-check]');
         var ok = true;
@@ -233,9 +233,9 @@
     }
 
 
-
-
-
+    /* ---------------------------------------------------------------- */
+    /*  Password strength meter                                          */
+    /* ---------------------------------------------------------------- */
 
     function wireMeter(input) {
         var meter = document.querySelector(input.getAttribute('data-meter'));
@@ -261,9 +261,9 @@
     }
 
 
-
-
-
+    /* ---------------------------------------------------------------- */
+    /*  Live character counter for textareas                             */
+    /* ---------------------------------------------------------------- */
 
     function wireCounter(field) {
         var out = document.querySelector(field.getAttribute('data-counter'));
@@ -282,9 +282,9 @@
     }
 
 
-
-
-
+    /* ---------------------------------------------------------------- */
+    /*  Wiring                                                           */
+    /* ---------------------------------------------------------------- */
 
     document.addEventListener('DOMContentLoaded', function () {
 
@@ -292,19 +292,19 @@
 
         Array.prototype.forEach.call(forms, function (form) {
 
-            form.setAttribute('novalidate', 'novalidate');
+            form.setAttribute('novalidate', 'novalidate');   // we do it ourselves
 
             var fields = form.querySelectorAll('[data-check]');
 
             Array.prototype.forEach.call(fields, function (field) {
 
-
+                /* Check when the visitor leaves the field ... */
                 field.addEventListener('blur', function () {
                     checkField(field);
                 });
 
-
-
+                /* ... and again as they type, but only once it has already
+                   been marked wrong, so nobody is scolded mid-word. */
                 field.addEventListener('input', function () {
                     var wrap = field.closest('.field');
                     if (wrap && wrap.classList.contains('has-error')) {
@@ -320,7 +320,7 @@
                 if (field.hasAttribute('data-counter')) { wireCounter(field); }
             });
 
-
+            /* Re-check the confirm field whenever the password changes. */
             var confirmField = form.querySelector('[data-match]');
             if (confirmField) {
                 var src = document.querySelector(confirmField.getAttribute('data-match'));
@@ -339,10 +339,10 @@
                     return;
                 }
 
-
-
-
-
+                /* Stop an impatient double-click producing two bookings.
+                   The button is NOT disabled here - a disabled submit
+                   button is left out of the POST data by some browsers -
+                   so a flag guards the second submit instead. */
                 if (submitting) {
                     ev.preventDefault();
                     return;
@@ -356,8 +356,8 @@
                     btn.textContent = btn.getAttribute('data-busy');
                 }
 
-
-
+                /* If the page is still here after a few seconds the submit
+                   failed somewhere; let the visitor try again. */
                 window.setTimeout(function () {
                     submitting = false;
                     form.classList.remove('is-submitting');

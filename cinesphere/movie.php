@@ -1,11 +1,11 @@
 <?php
-
-
-
-
-
-
-
+/* =====================================================================
+ * movie.php - one film, its details and its schedule
+ *
+ * The schedule is grouped date -> venue -> time entirely in PHP from a
+ * single joined SELECT, and each time chip carries live availability
+ * worked out from the bookings table.
+ * ===================================================================== */
 
 require_once __DIR__ . '/includes/auth.php';
 
@@ -28,7 +28,7 @@ if (!$movie) {
     exit;
 }
 
-
+/* ---- Every upcoming screening of this film ------------------------ */
 $rows = db_all(
     "SELECT v.*
        FROM v_showtime_availability v
@@ -39,13 +39,13 @@ $rows = db_all(
     [$movie_id]
 );
 
-
+/* ---- Group: date -> cinema -> list of screenings ------------------ */
 $byDate = [];
 foreach ($rows as $r) {
     $byDate[$r['show_date']][$r['cinema_name'] . '|' . $r['cinema_location']][] = $r;
 }
 
-
+/* ---- Other films the visitor might like --------------------------- */
 $firstGenre = trim(explode(',', $movie['genre'])[0]);
 $alsoLike = db_all(
     "SELECT movie_id, title, poster, classification, genre, duration_min, user_score
@@ -74,7 +74,7 @@ $page_description = mb_substr(strip_tags($movie['synopsis']), 0, 155);
 require __DIR__ . '/includes/header.php';
 ?>
 
-
+<!-- ======================== FILM HEADER ========================== -->
 <section class="film-hero">
   <div class="film-hero-bg">
     <img src="images/<?= e($banner) ?>" alt="" width="1600" height="620">
@@ -129,7 +129,7 @@ require __DIR__ . '/includes/header.php';
 </section>
 
 
-
+<!-- ========================== SCHEDULE =========================== -->
 <section class="section" id="schedule">
   <div class="container">
     <div class="section-head">
@@ -217,7 +217,7 @@ require __DIR__ . '/includes/header.php';
 </section>
 
 
-
+<!-- ========================= ALSO SHOWING ======================== -->
 <?php if ($alsoLike): ?>
 <section class="section section-sunken">
   <div class="container">

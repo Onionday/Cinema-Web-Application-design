@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/functions.php';
 
-
+/** Serialize schedule changes for a hall. Must be inside a transaction. */
 function lock_hall(int $hallId): void
 {
     if (!db_one('SELECT hall_id FROM halls WHERE hall_id = ? FOR UPDATE', [$hallId])) {
@@ -9,7 +9,10 @@ function lock_hall(int $hallId): void
     }
 }
 
-
+/** Overlap: existing_start < new_end AND existing_end > new_start.
+ * Both ends include runtime + 20 minutes. Exact endpoint contact is allowed;
+ * full timestamps also catch screenings that cross midnight. Staff callers
+ * lock the hall inside a transaction before checking and inserting. */
 function screening_conflict(int $hallId, string $date, string $time, int $duration, int $exclude = 0): ?array
 {
     $start = $date . ' ' . $time;

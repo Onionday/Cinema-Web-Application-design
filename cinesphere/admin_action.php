@@ -1,23 +1,24 @@
 <?php
-
-
-
-
-
-
-
-
-
-
-
-
-
+/* =====================================================================
+ * admin_action.php
+ *
+ * Every write the staff page can make, behind one gate: POST only, CSRF
+ * checked, and the session must belong to an account whose role is
+ * 'admin'.
+ *
+ * Booking changes (refund seats, cancel, move a seat) and ticket price
+ * changes are implemented in includes/booking_admin.php; the cases below
+ * validate the form, commit the change, attempt local mail and redirect.
+ *
+ * SQL used: SELECT, INSERT, UPDATE, DELETE.
+ * ===================================================================== */
 
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/scheduling.php';
 require_once __DIR__ . '/includes/mailer.php';
 require_once __DIR__ . '/includes/booking_admin.php';
 
+/* require_post() checks the request method and CSRF token before dispatch. */
 require_post();
 require_admin();
 
@@ -25,9 +26,9 @@ $action = (string) ($_POST['action'] ?? '');
 
 switch ($action) {
 
-
-
-
+    /* ============================================================== */
+    /*  Schedule a new screening                                      */
+    /* ============================================================== */
     case 'add_showtime':
 
         $errors    = [];
@@ -38,7 +39,7 @@ switch ($action) {
         $format    = trim((string) ($_POST['format'] ?? ''));
         $price     = (float) ($_POST['base_price'] ?? 0);
 
-
+        /* -- film -- */
         $movie = $movie_id > 0
             ? db_one('SELECT movie_id, title, duration_min FROM movies WHERE movie_id = ?', [$movie_id])
             : null;
@@ -46,7 +47,7 @@ switch ($action) {
             $errors['movie_id'] = 'Choose a film from the list.';
         }
 
-
+        /* -- hall -- */
         $hall = $hall_id > 0
             ? db_one('SELECT hall_id, hall_name FROM halls WHERE hall_id = ?', [$hall_id])
             : null;
@@ -54,7 +55,7 @@ switch ($action) {
             $errors['hall_id'] = 'Choose a hall from the list.';
         }
 
-
+        /* -- date -- */
         $d = DateTime::createFromFormat('Y-m-d', $show_date);
         if (!$d || $d->format('Y-m-d') !== $show_date) {
             $errors['show_date'] = 'Enter the date as YYYY-MM-DD.';
@@ -64,31 +65,31 @@ switch ($action) {
             $errors['show_date'] = 'The schedule only runs 90 days ahead.';
         }
 
-
+        /* -- time -- */
         if (!preg_match('/^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/', $show_time)) {
             $errors['show_time'] = 'Enter the start time as HH:MM.';
         } else {
             if (strlen($show_time) === 5) {
                 $show_time .= ':00';
             }
-
+            /* Nothing may start between 03:00 and 09:59 - the halls are closed. */
             $hour = (int) substr($show_time, 0, 2);
             if ($hour >= 3 && $hour < 10) {
                 $errors['show_time'] = 'The venues are closed between 03:00 and 10:00.';
             }
         }
 
-
+        /* -- not in the past, if the date is today -- */
         if (!$errors && strtotime($show_date . ' ' . $show_time) < time()) {
             $errors['show_time'] = 'That time has already passed today.';
         }
 
-
+        /* -- format -- */
         if (!in_array($format, ['2D', '3D', 'IMAX'], true)) {
             $errors['format'] = 'Choose 2D, 3D or IMAX.';
         }
 
-
+        /* -- price -- */
         if ($price < 5 || $price > 60) {
             $errors['base_price'] = 'The base price must be between '
                                   . money(5) . ' and ' . money(60) . '.';
@@ -133,9 +134,9 @@ switch ($action) {
         redirect('admin.php');
 
 
-
-
-
+    /* ============================================================== */
+    /*  Move a film between "now showing" and "coming soon"           */
+    /* ============================================================== */
     case 'set_movie_status':
 
         $movie_id = (int) ($_POST['movie_id'] ?? 0);
@@ -152,7 +153,7 @@ switch ($action) {
             redirect('admin.php');
         }
 
-
+        /* UPDATE */
         db_execute('UPDATE movies SET status = ? WHERE movie_id = ?',
                    [$status, $movie_id]);
 
@@ -166,9 +167,10 @@ switch ($action) {
         redirect('admin.php');
 
 
-
-
-
+    /* ============================================================== */
+    /*  Cancel a screening                                            */
+    /* ============================================================== */
+    /* Bulk cancellation releases bookings but does not log each one in booking_adjustments. */
     case 'cancel_showtime':
 
         $showtime_id = (int) ($_POST['showtime_id'] ?? 0);
@@ -216,9 +218,9 @@ switch ($action) {
         redirect('admin.php');
 
 
-
-
-
+    /* ============================================================== */
+    /*  Reopen a cancelled screening                                  */
+    /* ============================================================== */
     case 'reopen_showtime':
 
         $showtime_id = (int) ($_POST['showtime_id'] ?? 0);
@@ -259,9 +261,9 @@ switch ($action) {
         redirect('admin.php');
 
 
-
-
-
+    /* ============================================================== */
+    /*  Triage a feedback message                                     */
+    /* ============================================================== */
     case 'set_msg_status':
 
         $msg_id = (int) ($_POST['msg_id'] ?? 0);
@@ -278,7 +280,7 @@ switch ($action) {
             redirect('admin.php');
         }
 
-
+        /* UPDATE */
         db_execute('UPDATE contact_messages SET msg_status = ? WHERE msg_id = ?',
                    [$status, $msg_id]);
 
@@ -287,16 +289,16 @@ switch ($action) {
         redirect('admin.php?msgs=' . urlencode($status));
 
 
-
-
-
+    /* ============================================================== */
+    /*  Change a screening's ticket price                             */
+    /* ============================================================== */
     case 'set_price':
 
         $showtime_id = (int) ($_POST['showtime_id'] ?? 0);
         $raw         = trim((string) ($_POST['base_price'] ?? ''));
         $price       = round((float) $raw, 2);
 
-
+        /* Same rule as scheduling: S$5.00 to S$60.00 in 50-cent steps. */
         if (!is_numeric($raw) || $price < 5 || $price > 60
             || abs($price * 2 - round($price * 2)) > 0.001) {
             flash('error', 'The base price must be between ' . money(5) . ' and '
@@ -322,9 +324,9 @@ switch ($action) {
         redirect('admin.php#schedule');
 
 
-
-
-
+    /* ============================================================== */
+    /*  Refund some seats of a booking, or cancel the whole booking   */
+    /* ============================================================== */
     case 'refund_seats':
     case 'cancel_booking':
 
@@ -380,9 +382,9 @@ switch ($action) {
         redirect($back);
 
 
-
-
-
+    /* ============================================================== */
+    /*  Move one seat of a booking to another free seat               */
+    /* ============================================================== */
     case 'move_seat':
 
         $booking_id = (int) ($_POST['booking_id'] ?? 0);
@@ -428,7 +430,7 @@ switch ($action) {
         redirect($back);
 
 
-
+    /* ============================================================== */
     default:
         flash('error', 'Unknown staff action.');
         redirect('admin.php');

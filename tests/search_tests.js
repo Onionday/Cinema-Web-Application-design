@@ -1,5 +1,5 @@
-
-
+/* Read-only modern catalogue checks against a running local site.
+   NODE_PATH must resolve Playwright; PLAYWRIGHT_CHANNEL=msedge is supported. */
 const { chromium } = require('playwright');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -133,7 +133,7 @@ async function ready(page, q) {
         await fallbackContext.close();
     });
     const passed = records.filter(r => r.result === 'PASS').length;
-    fs.writeFileSync(path.join(__dirname, 'search-test-results.md'), '# Modern catalogue search tests\n\n'
+    fs.writeFileSync(path.join(__dirname, 'search-test-results.txt'), '# Modern catalogue search tests\n\n'
         + 'Run: ' + new Date().toISOString() + '. Playwright / Edge against ' + base + '\n\n'
         + passed + '/' + records.length + ' passed. Read-only searches; existing local database not reset.\n\n'
         + '| Scenario | Result |\n|---|---|\n'

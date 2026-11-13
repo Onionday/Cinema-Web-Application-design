@@ -1,10 +1,10 @@
 <?php
-
-
-
-
-
-
+/* =====================================================================
+ * logout.php
+ *
+ * Ends the session. POST only and CSRF-checked, so a stray <img> tag on
+ * another site cannot sign the visitor out.
+ * ===================================================================== */
 
 require_once __DIR__ . '/includes/auth.php';
 

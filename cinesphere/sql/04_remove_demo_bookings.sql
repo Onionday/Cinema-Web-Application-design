@@ -1,6 +1,6 @@
-
-
-
+-- Remove only the original demo bookings; preserve website-created bookings.
+-- Back up the database before importing. Safe to run more than once.
+-- Foreign keys cascade to booking_seats and booking_seat_history.
 USE cinesphere;
 START TRANSACTION;
 DELETE FROM bookings
